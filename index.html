@@ -71,6 +71,7 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
+    overflow-x: hidden;
   }
   ::selection { background: var(--seal-soft); }
   @media (prefers-reduced-motion: reduce) {
@@ -200,8 +201,8 @@
   }
   .person-name mark { background: var(--seal-soft); color: var(--seal); border-radius: 3px; }
   .person-sub {
-    display: flex; gap: 6px; align-items: center; margin-top: 1px;
-    font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden;
+    display: flex; gap: 6px 5px; align-items: center; margin-top: 1px; flex-wrap: wrap;
+    font-size: 11.5px; color: var(--ink-soft);
   }
   .tag {
     flex: none; font-size: 10.5px; padding: 1px 6px; border-radius: 999px;
@@ -226,11 +227,13 @@
   .overlay {
     position: fixed; inset: 0; background: rgb(20 24 21 / 0.45);
     display: flex; align-items: flex-end; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.18s ease; z-index: 50;
+    opacity: 0; transition: opacity 0.18s ease; z-index: 50;
   }
-  .overlay.open { opacity: 1; pointer-events: auto; }
+  .overlay[hidden] { display: none; }
+  .overlay.open { opacity: 1; }
   .panel {
     width: 100%; max-width: 460px; max-height: 86vh; overflow-y: auto;
+    overscroll-behavior: contain;
     background: var(--paper); border-radius: 18px 18px 0 0;
     box-shadow: var(--shadow); padding: 20px 20px 28px;
     transform: translateY(16px); transition: transform 0.2s ease;
@@ -416,7 +419,7 @@
   <div class="tree" id="tree"><div class="empty-state">กำลังโหลดข้อมูล…</div></div>
 </main>
 
-<div class="overlay" id="overlay">
+<div class="overlay" id="overlay" hidden>
   <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
 </div>
 
@@ -975,11 +978,32 @@ function initApp(DATA) {
     html += '</div>';
 
     document.getElementById("panel").innerHTML = html;
-    document.getElementById("overlay").classList.add("open");
+    openOverlay();
   }
 
+  // The overlay stays `hidden` (removed from layout and hit-testing
+  // entirely — the harness's `[hidden]{display:none!important}` rule and
+  // our own guarantee it) whenever it's closed, so there is never a
+  // window where background content can be clicked or scrolled through
+  // "behind" it. Body scroll is locked too, and unhidden only after the
+  // close transition finishes so the fade-out is still visible.
+  var closeTimer = null;
+  function openOverlay() {
+    var overlay = document.getElementById("overlay");
+    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    // Force a reflow so the browser registers the un-hidden state before
+    // the "open" class flips opacity — otherwise the fade-in transition
+    // can get skipped.
+    void overlay.offsetHeight;
+    overlay.classList.add("open");
+  }
   function closePanel() {
-    document.getElementById("overlay").classList.remove("open");
+    var overlay = document.getElementById("overlay");
+    overlay.classList.remove("open");
+    document.body.style.overflow = "";
+    closeTimer = setTimeout(function () { overlay.hidden = true; }, 200);
   }
 
   // ---------- events (delegated) ----------
