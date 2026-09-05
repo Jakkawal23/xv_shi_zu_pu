@@ -208,11 +208,19 @@
     background: var(--paper-sunken); color: var(--ink-soft); font-weight: 600;
   }
   .tag.adopted { background: var(--gold); color: #2a2110; }
+  .tag.deceased { color: var(--ink-faint); font-style: italic; }
   .chip-phone { flex: none; color: var(--jade); opacity: 0.8; display: flex; }
   .person-thai {
     display: block; font-size: 12px; color: var(--ink-soft);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
   }
+  .match-hint {
+    display: flex; align-items: center; gap: 4px; margin-top: 3px;
+    font-size: 11px; color: var(--seal); background: var(--seal-soft);
+    padding: 2px 8px; border-radius: 999px; width: fit-content; max-width: 100%;
+  }
+  .match-hint span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  mark { background: var(--seal-soft); color: var(--seal); border-radius: 3px; }
 
   /* ---------- Detail overlay ---------- */
   .overlay {
@@ -301,118 +309,73 @@
   }
 
   .empty-state { text-align: center; padding: 40px 10px; color: var(--ink-soft); font-size: 14px; }
+  .load-error { text-align: left; max-width: 480px; margin: 40px auto; line-height: 1.6; }
+  .load-error p { margin: 0 0 10px; }
+  .load-error b { color: var(--seal); }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle {
+    margin-left: auto; flex: none; width: 38px; height: 38px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--jade); color: var(--jade); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
 </style>
+
+<script>
+// Runs immediately (before the rest of the page paints) so the theme is
+// correct on first frame, no flash. Default is always light mode unless
+// the viewer previously switched to dark on this device — this page does
+// NOT follow the OS/browser dark-mode setting automatically.
+(function () {
+  "use strict";
+  var STORAGE_KEY = "xu-jiapu-theme";
+  function getStored() {
+    try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
+  }
+  function setStored(v) {
+    try { localStorage.setItem(STORAGE_KEY, v); } catch (e) {}
+  }
+  var initialTheme = getStored() === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", initialTheme);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var sun = document.getElementById("themeIconSun");
+    var moon = document.getElementById("themeIconMoon");
+    function syncIcons(theme) {
+      if (!sun || !moon) return;
+      sun.hidden = theme === "dark";
+      moon.hidden = theme !== "dark";
+    }
+    syncIcons(initialTheme);
+    var btn = document.getElementById("themeToggle");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+      var next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      setStored(next);
+      syncIcons(next);
+    });
+  });
+})();
+</script>
 
 <!--
   ============================================================
-  ข้อมูลตระกูล (แก้ไขได้ที่นี่)
+  ข้อมูลตระกูล — อยู่แยกไฟล์ที่ family-data.json
   ============================================================
-  แก้ไขคน/เพิ่มคนใหม่ได้โดยแก้ JSON ในบล็อก <script id="family-data">
-  ด้านล่างนี้โดยตรง แล้วบันทึกไฟล์ แล้วรีเฟรชหน้าเว็บ — ไม่ต้องแก้โค้ดส่วนอื่น
-  (รายละเอียดเต็ม ๆ พร้อมตัวอย่างอยู่ใน README.md ที่แนบมาด้วย)
+  หน้านี้โหลดข้อมูลจากไฟล์ family-data.json ที่อยู่โฟลเดอร์เดียวกัน
+  ตอนเปิดหน้าเว็บ (fetch) — แก้คน/เพิ่มคนใหม่ได้โดยแก้ไฟล์นั้นไฟล์เดียว
+  แล้วรีเฟรชหน้าเว็บ ไม่ต้องแตะไฟล์นี้เลย โครงสร้าง JSON เต็ม ๆ พร้อม
+  ตัวอย่างอยู่ใน README.md ที่แนบมาด้วย
 
-  โครงสร้างแต่ละคนใน "people":
-    id            : รหัสไม่ซ้ำ เช่น "p52"
-    gen           : ลำดับรุ่นเป็นตัวเลข (ตัวที่ 20 = 第二十代)
-    genLabel      : ป้ายรุ่นภาษาจีนต้นฉบับ เช่น "第二十代"
-    name          : ชื่อภาษาจีน
-    thaiName      : ชื่อไทย หรือ null ถ้าไม่มี
-    order         : ลำดับการเกิด เช่น "長子" "次女" "義女" หรือ null ถ้าไม่มี
-    gender        : "M" หรือ "F"
-    parentId      : id ของพ่อ/แม่ในสายนี้ หรือ null ถ้าเป็นต้นตระกูล
-    phone         : เบอร์โทรของตัวเอง หรือ null
-    email         : อีเมล หรือ null
-    lineId        : ไอดีไลน์ หรือ null
-    wechatId      : ไอดีวีแชท หรือ null
-    address       : ที่อยู่ หรือ null
-    adopted       : true ถ้าเป็นบุตรบุญธรรม (義子/義女)
-    photo         : URL หรือ data URI ของรูปภาพ หรือ null (ยังไม่มี = ใช้ตัวอักษรย่อแทน)
-    notes         : รายละเอียดเพิ่มเติมแบบข้อความอิสระ หรือ null
-    extra         : [{ "label": "...", "value": "..." }, ...] สำหรับข้อมูลอื่น ๆ ที่ไม่มีช่องสำเร็จรูป
-                    เช่น เฟซบุ๊ก วันเกิด อาชีพ — ใส่กี่รายการก็ได้ หรือ [] ถ้าไม่มี
-    spouse        : null ถ้าไม่มีข้อมูลคู่สมรส หรือ object ที่มีฟิลด์แบบเดียวกับคนได้แก่
-                    { "name", "thaiName", "phone", "email", "lineId", "wechatId",
-                      "address", "extra" } — ใส่เฉพาะฟิลด์ที่มีข้อมูลก็ได้
+  ⚠️ เปิดไฟล์นี้ด้วยการดับเบิลคลิกตรง ๆ (file://) เบราว์เซอร์จะบล็อกไม่ให้
+  โหลด family-data.json ได้ (ข้อจำกัดความปลอดภัยของเบราว์เซอร์เอง ไม่ใช่บั๊ก)
+  ต้องเปิดผ่านเว็บเซิร์ฟเวอร์ — รันในเครื่อง หรือโฮสต์บน GitHub Pages ก็ได้
+  วิธีทำแบบละเอียดอยู่ใน README.md
 -->
-<script id="family-data" type="application/json">
-{
-  "meta": {
-    "surname": "許",
-    "title": "許氏族谱",
-    "subtitle": "ผังลำดับวงศ์ตระกูล",
-    "updated": "2026-09-05"
-  },
-  "people": [
-    { "id": "p1",  "gen": 1,  "genLabel": "一世祖",   "name": "許斌",   "thaiName": null, "order": null, "gender": "M", "parentId": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p2",  "gen": 2,  "genLabel": "二世祖",   "name": "許世",   "thaiName": null, "order": null, "gender": "M", "parentId": "p1", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p3",  "gen": 3,  "genLabel": "第三代",   "name": "許海",   "thaiName": null, "order": null, "gender": "M", "parentId": "p2", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p4",  "gen": 4,  "genLabel": "第四代",   "name": "許英",   "thaiName": null, "order": null, "gender": "M", "parentId": "p3", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p5",  "gen": 5,  "genLabel": "第五代",   "name": "許尽巨", "thaiName": null, "order": null, "gender": "M", "parentId": "p4", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p6",  "gen": 6,  "genLabel": "第六代",   "name": "許克让", "thaiName": null, "order": null, "gender": "M", "parentId": "p5", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p7",  "gen": 7,  "genLabel": "第七代",   "name": "許治純", "thaiName": null, "order": null, "gender": "M", "parentId": "p6", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p8",  "gen": 8,  "genLabel": "第八代",   "name": "許登弟", "thaiName": null, "order": null, "gender": "M", "parentId": "p7", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p9",  "gen": 9,  "genLabel": "第九代",   "name": "許存爵", "thaiName": null, "order": null, "gender": "M", "parentId": "p8", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p10", "gen": 10, "genLabel": "第十代",   "name": "許如珠", "thaiName": null, "order": null, "gender": "M", "parentId": "p9", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p11", "gen": 11, "genLabel": "第十一代", "name": "許聯科", "thaiName": null, "order": null, "gender": "M", "parentId": "p10", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p12", "gen": 12, "genLabel": "第十二代", "name": "許國显", "thaiName": null, "order": null, "gender": "M", "parentId": "p11", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p13", "gen": 13, "genLabel": "第十三代", "name": "許天金", "thaiName": null, "order": null, "gender": "M", "parentId": "p12", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p14", "gen": 14, "genLabel": "第十四代", "name": "許大文", "thaiName": null, "order": null, "gender": "M", "parentId": "p13", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p15", "gen": 15, "genLabel": "第十五代", "name": "許志安", "thaiName": null, "order": null, "gender": "M", "parentId": "p14", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p16", "gen": 16, "genLabel": "第十六代", "name": "許德金", "thaiName": null, "order": null, "gender": "M", "parentId": "p15", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p17", "gen": 17, "genLabel": "第十七代", "name": "許开凤", "thaiName": null, "order": null, "gender": "M", "parentId": "p16", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p18", "gen": 18, "genLabel": "第十八代", "name": "許連壽", "thaiName": null, "order": null, "gender": "M", "parentId": "p17", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p19", "gen": 19, "genLabel": "第十九代", "name": "許常學", "thaiName": null, "order": null, "gender": "M", "parentId": "p18", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p20", "gen": 20, "genLabel": "第二十代", "name": "許慶洪", "thaiName": null, "order": null, "gender": "M", "parentId": "p19", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
-      "spouse": { "name": "盤妹蔥", "thaiName": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
-
-    { "id": "p21", "gen": 21, "genLabel": "第二十一代", "name": "許永富", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p20", "phone": "0899978820", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p22", "gen": 21, "genLabel": "第二十一代", "name": "許美蘭", "thaiName": null, "order": "女", "gender": "F", "parentId": "p20", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
-      "spouse": { "name": "趙華", "thaiName": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
-    { "id": "p23", "gen": 21, "genLabel": "第二十一代", "name": "許永清", "thaiName": null, "order": "三子", "gender": "M", "parentId": "p20", "phone": "0818616127", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
-      "spouse": { "name": "字在玲", "thaiName": null, "phone": "0812951069", "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
-    { "id": "p24", "gen": 21, "genLabel": "第二十一代", "name": "許永財", "thaiName": null, "order": "五子", "gender": "M", "parentId": "p20", "phone": "0892616053", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
-      "spouse": { "name": "紅歡", "thaiName": null, "phone": "0624266052", "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
-
-    { "id": "p25", "gen": 22, "genLabel": "第二十二代", "name": "許金菊", "thaiName": null, "order": "女", "gender": "F", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p26", "gen": 22, "genLabel": "第二十二代", "name": "許金榮", "thaiName": null, "order": "子", "gender": "M", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p27", "gen": 22, "genLabel": "第二十二代", "name": "許金美", "thaiName": null, "order": "女", "gender": "F", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p28", "gen": 22, "genLabel": "第二十二代", "name": "許金平", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p29", "gen": 22, "genLabel": "第二十二代", "name": "許金麗", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p30", "gen": 22, "genLabel": "第二十二代", "name": "許金富", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p31", "gen": 22, "genLabel": "第二十二代", "name": "許金惠", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p22", "phone": "0925036558", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p32", "gen": 22, "genLabel": "第二十二代", "name": "許金金", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p33", "gen": 22, "genLabel": "第二十二代", "name": "許金銀", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p34", "gen": 22, "genLabel": "第二十二代", "name": "許金慧", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p35", "gen": 22, "genLabel": "第二十二代", "name": "許金寶", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p36", "gen": 22, "genLabel": "第二十二代", "name": "許金恆", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p24", "phone": "0638151584", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p37", "gen": 22, "genLabel": "第二十二代", "name": "許金玉", "thaiName": null, "order": "女", "gender": "F", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p38", "gen": 22, "genLabel": "第二十二代", "name": "許玉林", "thaiName": null, "order": "義女", "gender": "F", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": true, "photo": null, "notes": "บุตรสาวบุญธรรม", "extra": [], "spouse": null },
-
-    { "id": "p39", "gen": 23, "genLabel": "第二十三代", "name": "許定玟", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p25", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p40", "gen": 23, "genLabel": "第二十三代", "name": "許定邦", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p25", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p41", "gen": 23, "genLabel": "第二十三代", "name": "許定芸", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p26", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p42", "gen": 23, "genLabel": "第二十三代", "name": "許銀龍", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p43", "gen": 23, "genLabel": "第二十三代", "name": "許銀仙", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p44", "gen": 23, "genLabel": "第二十三代", "name": "許銀銖", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p45", "gen": 23, "genLabel": "第二十三代", "name": "許銀香", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p46", "gen": 23, "genLabel": "第二十三代", "name": "許銀貴", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p47", "gen": 23, "genLabel": "第二十三代", "name": "許銀強", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p48", "gen": 23, "genLabel": "第二十三代", "name": "許銀雲", "thaiName": null, "order": "三子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p49", "gen": 23, "genLabel": "第二十三代", "name": "許銀和", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p31", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-    { "id": "p50", "gen": 23, "genLabel": "第二十三代", "name": "許銀偉", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p31", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
-
-    { "id": "p51", "gen": 24, "genLabel": "第二十四代", "name": "許賢淑", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p46", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null }
-  ]
-}
-</script>
-
 <header class="top">
   <div class="top-inner">
     <div class="title-row">
@@ -421,6 +384,10 @@
         <h1 id="pageTitle">許氏族谱</h1>
         <p id="pageSubtitle">ผังลำดับวงศ์ตระกูล · แตะชื่อเพื่อดูข้อมูลติดต่อ</p>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="สลับโหมดกลางวัน/กลางคืน" title="สลับโหมดกลางวัน/กลางคืน">
+        <span id="themeIconSun"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+        <span id="themeIconMoon" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+      </button>
     </div>
     <label class="search" id="searchBox">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -433,18 +400,20 @@
 </header>
 
 <main class="wrap">
-  <button class="ancestors-toggle" id="ancestorsToggle" aria-expanded="false">
-    <span class="lbl"><b>สายบรรพบุรุษ</b> — 一世祖 ถึง 第十九代
-      <span class="sub">19 รุ่นแรกของตระกูล เรียงเป็นเส้นตรง ก่อนถึงรุ่น 許慶洪 ที่แตกสาย</span>
-    </span>
-    <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
-  </button>
-  <div class="ancestor-line" id="ancestorLine">
-    <div class="ancestor-line-inner" id="ancestorLineInner"></div>
+  <div id="ancestorsBlock">
+    <button class="ancestors-toggle" id="ancestorsToggle" aria-expanded="false">
+      <span class="lbl"><b>สายบรรพบุรุษ</b> — 一世祖 ถึง 第十九代
+        <span class="sub">19 รุ่นแรกของตระกูล เรียงเป็นเส้นตรง ก่อนถึงรุ่น 許慶洪 ที่แตกสาย</span>
+      </span>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="ancestor-line" id="ancestorLine">
+      <div class="ancestor-line-inner" id="ancestorLineInner"></div>
+    </div>
   </div>
 
-  <div class="section-label" id="treeLabel">許慶洪 และผู้สืบสกุล</div>
-  <div class="tree" id="tree"></div>
+  <div class="section-label" id="treeLabel">กำลังโหลด…</div>
+  <div class="tree" id="tree"><div class="empty-state">กำลังโหลดข้อมูล…</div></div>
 </main>
 
 <div class="overlay" id="overlay">
@@ -452,9 +421,8 @@
 </div>
 
 <script>
-(function () {
+function initApp(DATA) {
   "use strict";
-  var DATA = JSON.parse(document.getElementById("family-data").textContent);
   var people = DATA.people;
   var byId = {};
   var childrenOf = {};
@@ -554,55 +522,188 @@
     return raw;
   }
 
+  // Dates are stored as ISO "YYYY-MM-DD" (Gregorian / ค.ศ.). Parsed with a
+  // fixed regex rather than `new Date(str)` to avoid timezone-shift bugs.
+  var THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  function parseIsoDate(iso) {
+    if (!iso) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!m) return null;
+    var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (isNaN(d.getTime())) return null;
+    return d;
+  }
+  function formatThaiDate(iso) {
+    var d = parseIsoDate(iso);
+    if (!d) return null;
+    return d.getDate() + " " + THAI_MONTHS[d.getMonth()] + " " + d.getFullYear() + " (พ.ศ. " + (d.getFullYear() + 543) + ")";
+  }
+  // Full years between two dates (standard "has the birthday happened
+  // yet this year" age calculation), or null if either date is missing.
+  function yearsBetween(startIso, endIso) {
+    var start = parseIsoDate(startIso);
+    var end = parseIsoDate(endIso) || new Date();
+    if (!start) return null;
+    var age = end.getFullYear() - start.getFullYear();
+    var beforeBirthday = (end.getMonth() < start.getMonth()) ||
+      (end.getMonth() === start.getMonth() && end.getDate() < start.getDate());
+    if (beforeBirthday) age--;
+    return age >= 0 ? age : null;
+  }
+  function lifeStatusTag(p) {
+    if (p.deathDate) {
+      var age = yearsBetween(p.birthDate, p.deathDate);
+      return "เสียชีวิตแล้ว" + (age !== null ? " · อายุ " + age + " ปี" : "");
+    }
+    if (p.birthDate) {
+      var cur = yearsBetween(p.birthDate, null);
+      return cur !== null ? "อายุ " + cur + " ปี" : null;
+    }
+    return null;
+  }
+
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
-  function highlight(name) {
+  // Small edit-distance check, used only for the Pinyin channel so a minor
+  // typo ("xvjinbao") still finds "xujinbao" — exact/script/phone matching
+  // above stays strict.
+  function editDistance(a, b) {
+    var m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    var prev = new Array(n + 1);
+    var cur = new Array(n + 1);
+    for (var j = 0; j <= n; j++) prev[j] = j;
+    for (var i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (var j2 = 1; j2 <= n; j2++) {
+        var cost = a[i - 1] === b[j2 - 1] ? 0 : 1;
+        cur[j2] = Math.min(prev[j2] + 1, cur[j2 - 1] + 1, prev[j2 - 1] + cost);
+      }
+      var tmp = prev; prev = cur; cur = tmp;
+    }
+    return prev[n];
+  }
+  function fuzzyPinyinMatch(target, query) {
+    if (!target || !query) return false;
+    if (target.indexOf(query) !== -1) return true;
+    // A single short syllable ("hong", "rong", "long"...) is only ever
+    // one letter away from several *different* real syllables, so fuzzy
+    // tolerance there would match the wrong people. Only forgive typos
+    // once the query spans roughly two syllables or more, where a stray
+    // extra/wrong letter is an actual typo rather than a different word.
+    if (query.length <= 7) return false;
+    var maxDist = query.length <= 10 ? 1 : (query.length <= 14 ? 2 : 3);
+    for (var start = 0; start < target.length; start++) {
+      for (var len = Math.max(1, query.length - maxDist); len <= query.length + maxDist && start + len <= target.length; len++) {
+        if (editDistance(target.substr(start, len), query) <= maxDist) return true;
+      }
+    }
+    return false;
+  }
+  // "v" never appears in standard Pinyin; common IMEs use it in place of
+  // the ü sound (xu/ju/qu/yu), e.g. "xv" for "xu" — normalise it away.
+  // Pinyin matching only makes sense when the query is itself Latin text:
+  // if it contains Han characters, toPinyinFlat would "helpfully" convert
+  // those too (e.g. "红" -> "hong"), turning an exact-character search
+  // into a broad phonetic one that also catches unrelated names like
+  // 許慶洪 (…hong) — so Han queries skip pinyin matching entirely and rely
+  // on the exact / Simplified-Traditional checks instead.
+  function containsHan(str) {
+    return /[㐀-鿿豈-﫿]/.test(str);
+  }
+  function pinyinQuery(q) {
+    if (containsHan(q)) return "";
+    return toPinyinFlat(q).replace(/v/g, "u");
+  }
+
+  function highlightName(name) {
     if (!searchQuery) return escapeHtml(name);
-    var idx = name.indexOf(searchQuery);
-    if (idx === -1) return escapeHtml(name);
-    return escapeHtml(name.slice(0, idx)) + "<mark>" + escapeHtml(name.slice(idx, idx + searchQuery.length)) + "</mark>" + escapeHtml(name.slice(idx + searchQuery.length));
+    var q = searchQuery.trim();
+    if (!q) return escapeHtml(name);
+    var idx = name.indexOf(q);
+    if (idx !== -1) {
+      return escapeHtml(name.slice(0, idx)) + "<mark>" + escapeHtml(name.slice(idx, idx + q.length)) + "</mark>" + escapeHtml(name.slice(idx + q.length));
+    }
+    // Simplified<->Traditional: CANON_MAP is a 1-for-1 character swap, so
+    // a match index in the normalised string lines up with the original.
+    var qNorm = normalizeHan(q);
+    var nIdx = qNorm ? normalizeHan(name).indexOf(qNorm) : -1;
+    if (nIdx !== -1) {
+      return escapeHtml(name.slice(0, nIdx)) + "<mark>" + escapeHtml(name.slice(nIdx, nIdx + qNorm.length)) + "</mark>" + escapeHtml(name.slice(nIdx + qNorm.length));
+    }
+    // Pinyin: one Chinese character can expand to several Latin letters,
+    // so there's no clean substring to mark — highlight the whole name.
+    var qPinyin = pinyinQuery(q);
+    if (qPinyin.length >= 2 && fuzzyPinyinMatch(toPinyinFlat(name), qPinyin)) {
+      return "<mark>" + escapeHtml(name) + "</mark>";
+    }
+    return escapeHtml(name);
+  }
+
+  function highlightPlain(text) {
+    if (!searchQuery || !text) return escapeHtml(text || "");
+    var q = searchQuery.trim();
+    if (!q) return escapeHtml(text);
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return escapeHtml(text.slice(0, idx)) + "<mark>" + escapeHtml(text.slice(idx, idx + q.length)) + "</mark>" + escapeHtml(text.slice(idx + q.length));
   }
 
   function avatarLetter(name) {
     return name.slice(-1);
   }
 
-  function searchableFields(obj) {
+  var FIELD_LABELS = {
+    name: "ชื่อ", thaiName: "ชื่อไทย", phone: "เบอร์โทร", email: "อีเมล",
+    lineId: "LINE", wechatId: "WeChat", address: "ที่อยู่", notes: "รายละเอียดเพิ่มเติม"
+  };
+
+  function fieldEntries(obj, prefix) {
     if (!obj) return [];
-    var arr = [obj.name, obj.thaiName, obj.phone, obj.email, obj.lineId, obj.wechatId, obj.address, obj.notes];
+    var entries = [];
+    ["name", "thaiName", "phone", "email", "lineId", "wechatId", "address", "notes"].forEach(function (k) {
+      if (obj[k]) entries.push({ key: (prefix ? "spouse." : "") + k, label: (prefix ? prefix + " " : "") + FIELD_LABELS[k], value: String(obj[k]) });
+    });
     if (obj.extra) {
       obj.extra.forEach(function (item) {
-        arr.push(item.label);
-        arr.push(item.value);
+        if (item && item.value) entries.push({ key: (prefix ? "spouse." : "") + "extra", label: (prefix ? prefix + " " : "") + (item.label || "อื่น ๆ"), value: String(item.value) });
       });
     }
-    return arr.filter(function (v) { return v; });
+    return entries;
   }
 
-  // Matches on: exact substring, Simplified<->Traditional Chinese either
-  // way, tone-less Pinyin, phone digits, and the same fields on the
-  // spouse — so a phone number, a spouse's name, or "xujinju" all find
-  // the right person.
-  function matchesQuery(p) {
-    if (!searchQuery) return false;
-    var q = searchQuery.trim();
-    if (!q) return false;
-    var qNorm = normalizeHan(q);
-    var qPinyin = toPinyinFlat(q);
+  function textMatches(val, q, qNorm, qPinyin) {
+    if (val.indexOf(q) !== -1) return true;
+    if (qNorm && normalizeHan(val).indexOf(qNorm) !== -1) return true;
+    if (qPinyin.length >= 2 && fuzzyPinyinMatch(toPinyinFlat(val), qPinyin)) return true;
     var qDigits = q.replace(/\D/g, "");
-    var fields = searchableFields(p).concat(searchableFields(p.spouse));
-    for (var i = 0; i < fields.length; i++) {
-      var val = String(fields[i]);
-      if (val.indexOf(q) !== -1) return true;
-      if (normalizeHan(val).indexOf(qNorm) !== -1) return true;
-      if (qPinyin && toPinyinFlat(val).indexOf(qPinyin) !== -1) return true;
-      if (qDigits && qDigits.length >= 3 && val.replace(/\D/g, "").indexOf(qDigits) !== -1) return true;
-    }
+    if (qDigits.length >= 3 && val.replace(/\D/g, "").indexOf(qDigits) !== -1) return true;
     return false;
+  }
+
+  // Finds *why* a person matches the current search: which field, on the
+  // person or their spouse, actually contains the query. Returns null if
+  // nothing matches. Checked in a fixed field order so "name" wins first.
+  function matchInfo(p) {
+    if (!searchQuery) return null;
+    var q = searchQuery.trim();
+    if (!q) return null;
+    var qNorm = normalizeHan(q);
+    var qPinyin = pinyinQuery(q);
+    var entries = fieldEntries(p, "").concat(fieldEntries(p.spouse, "คู่สมรส"));
+    for (var i = 0; i < entries.length; i++) {
+      if (textMatches(entries[i].value, q, qNorm, qPinyin)) return entries[i];
+    }
+    return null;
+  }
+
+  function matchesQuery(p) {
+    return !!matchInfo(p);
   }
 
   // ids that must render (matches + all their ancestors) while searching
@@ -632,6 +733,15 @@
   }
   function pinIconSvg() {
     return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.7"/></svg>';
+  }
+  function findIconSvg() {
+    return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+  }
+  function calendarIconSvg() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>';
+  }
+  function hourglassIconSvg() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5h12M6 21.5h12M6 2.5c0 5 12 5 12 10s-12 5-12 10M18 2.5c0 5-12 5-12 10s12 5 12 10"/></svg>';
   }
 
   // Builds the contact-row list for a person or a spouse object: one row
@@ -688,6 +798,9 @@
     var subParts = ["รุ่น " + p.gen];
     if (p.order) subParts.push(ORDER_TH[p.order] || p.order);
     if (p.adopted) subParts.push("บุญธรรม");
+    var lifeTag = lifeStatusTag(p);
+    if (lifeTag) subParts.push(lifeTag);
+    var mi = searchQuery ? matchInfo(p) : null;
 
     var html = '<div class="node" data-id="' + p.id + '">';
     html += '<div class="node-row">';
@@ -700,9 +813,15 @@
     html += '<button class="person-chip" data-open="' + p.id + '">';
     html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
     html += '<span class="person-meta">';
-    html += '<span class="person-name">' + highlight(p.name) + '</span>';
-    if (p.thaiName) html += '<span class="person-thai">' + escapeHtml(p.thaiName) + '</span>';
-    html += '<span class="person-sub">' + subParts.map(function (s) { return '<span class="tag' + (s === "บุญธรรม" ? " adopted" : "") + '">' + escapeHtml(s) + '</span>'; }).join("") + '</span>';
+    html += '<span class="person-name">' + highlightName(p.name) + '</span>';
+    if (p.thaiName) html += '<span class="person-thai">' + highlightPlain(p.thaiName) + '</span>';
+    html += '<span class="person-sub">' + subParts.map(function (s) {
+      var cls = s === "บุญธรรม" ? " adopted" : (s.indexOf("เสียชีวิตแล้ว") === 0 ? " deceased" : "");
+      return '<span class="tag' + cls + '">' + escapeHtml(s) + '</span>';
+    }).join("") + '</span>';
+    if (mi && mi.key !== "name" && mi.key !== "thaiName") {
+      html += '<span class="match-hint">' + findIconSvg() + '<span>' + escapeHtml(mi.label) + ': ' + escapeHtml(mi.value) + '</span></span>';
+    }
     html += '</span>';
     if (p.phone) html += '<span class="chip-phone">' + phoneIconSvg() + '</span>';
     html += '</button>';
@@ -723,10 +842,7 @@
     var root = byId[TREE_ROOT_ID];
 
     if (searchQuery && (!searchVisible || !Object.keys(searchVisible).length)) {
-      treeEl.innerHTML = '<div class="empty-state">ไม่พบชื่อ "' + escapeHtml(searchQuery) + '" ในทำเนียบตระกูล</div>';
-    } else if (searchQuery && searchVisible[ROOT_ID] && !searchVisible[TREE_ROOT_ID]) {
-      // match lives purely in the ancestor line; tree stays as-is (empty note)
-      treeEl.innerHTML = renderNode(root, searchVisible);
+      treeEl.innerHTML = '<div class="empty-state">ไม่พบ "' + escapeHtml(searchQuery) + '" ในทำเนียบตระกูล</div>';
     } else {
       treeEl.innerHTML = renderNode(root, searchVisible);
     }
@@ -737,13 +853,22 @@
 
     renderAncestorLine(searchVisible);
 
-    // auto-open ancestor drawer if a match lives there
-    if (searchQuery && searchVisible) {
+    // The ancestor drawer is a separate, collapsed-by-default section, not
+    // part of the search results — so while searching it either shows only
+    // the matches it actually contains (auto-expanded), or hides entirely
+    // rather than sitting there empty and in the way. Clearing the search
+    // always restores exactly the open/closed state the user last chose.
+    var ancestorsBlock = document.getElementById("ancestorsBlock");
+    if (searchQuery) {
       var hasAncestorMatch = false;
       for (var i = 1; i <= 19; i++) {
-        if (searchVisible["p" + i] && matchesQuery(byId["p" + i])) hasAncestorMatch = true;
+        if (searchVisible && searchVisible["p" + i] && matchesQuery(byId["p" + i])) { hasAncestorMatch = true; break; }
       }
-      if (hasAncestorMatch) setAncestorOpen(true);
+      ancestorsBlock.hidden = !hasAncestorMatch;
+      if (hasAncestorMatch) setAncestorOpen(true, false);
+    } else {
+      ancestorsBlock.hidden = false;
+      setAncestorOpen(ancestorOpenManual, false);
     }
   }
 
@@ -756,13 +881,18 @@
       var p = byId[id];
       return '<button class="ancestor-row person-chip" data-open="' + p.id + '" style="all:unset;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:5px 8px;border-radius:7px;font-size:14px;width:100%;box-sizing:border-box;">' +
         '<span class="gi">' + p.gen + '</span>' +
-        '<span class="gn">' + highlight(p.name) + '</span>' +
+        '<span class="gn">' + highlightName(p.name) + '</span>' +
         '<span class="gl">' + escapeHtml(p.genLabel) + '</span>' +
         '</button>';
     }).join("") + (ids.length ? '<div class="arrow">↓ สืบสายสู่ ' + escapeHtml(byId[TREE_ROOT_ID].name) + ' (第二十代) ซึ่งเป็นจุดแตกสายตระกูล</div>' : '');
   }
 
-  function setAncestorOpen(open) {
+  // `manual` marks a change as the user's own choice (persisted and
+  // restored once search is cleared); an automatic open while a search
+  // match lives in the ancestor line is not persisted.
+  var ancestorOpenManual = false;
+  function setAncestorOpen(open, manual) {
+    if (manual) ancestorOpenManual = open;
     var toggle = document.getElementById("ancestorsToggle");
     var line = document.getElementById("ancestorLine");
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
@@ -789,6 +919,24 @@
     if (p.order) html += '<span class="tag">' + escapeHtml(ORDER_TH[p.order] || p.order) + '</span>';
     if (p.adopted) html += '<span class="tag adopted">บุตรบุญธรรม</span>';
     html += '</div></div></div>';
+
+    if (p.birthDate || p.deathDate) {
+      html += '<div class="panel-section"><h3>วันเกิด – วันเสียชีวิต</h3>';
+      html += '<div class="info-row"><span class="info-icon">' + calendarIconSvg() + '</span><span class="info-body">' +
+        '<span class="info-label">วันเกิด</span><span class="info-value' + (p.birthDate ? '' : ' empty') + '">' +
+        escapeHtml(p.birthDate ? formatThaiDate(p.birthDate) : "ไม่ทราบ") + '</span></span></div>';
+      if (p.deathDate) {
+        html += '<div class="info-row"><span class="info-icon">' + calendarIconSvg() + '</span><span class="info-body">' +
+          '<span class="info-label">วันเสียชีวิต</span><span class="info-value">' + escapeHtml(formatThaiDate(p.deathDate)) + '</span></span></div>';
+      }
+      var ageLine = lifeStatusTag(p);
+      if (ageLine) {
+        var ageOnly = ageLine.replace(/^เสียชีวิตแล้ว\s*·\s*/, "");
+        html += '<div class="info-row"><span class="info-icon">' + hourglassIconSvg() + '</span><span class="info-body">' +
+          '<span class="info-label">' + (p.deathDate ? "อายุตอนเสียชีวิต" : "อายุปัจจุบัน") + '</span><span class="info-value">' + escapeHtml(ageOnly) + '</span></span></div>';
+      }
+      html += '</div>';
+    }
 
     html += '<div class="panel-section"><h3>ข้อมูลติดต่อ</h3>' + contactRowsHtml(p, "ยังไม่มีข้อมูลติดต่อ") + '</div>';
 
@@ -858,7 +1006,7 @@
     }
     if (e.target.id === "ancestorsToggle" || e.target.closest("#ancestorsToggle")) {
       var line = document.getElementById("ancestorLine");
-      setAncestorOpen(!line.classList.contains("open"));
+      setAncestorOpen(!line.classList.contains("open"), true);
       return;
     }
     if (e.target.id === "clearSearch" || e.target.closest("#clearSearch")) {
@@ -886,10 +1034,43 @@
   if (footerP) {
     footerP.textContent = "ทำเนียบวงศ์ตระกูล " + (DATA.meta.surname || "") +
       " — ข้อมูล ณ วันที่ " + (DATA.meta.updated || "-") +
-      " · แก้ไขข้อมูลได้ที่บล็อก JSON ต้นไฟล์นี้";
+      " · แก้ไขข้อมูลได้ที่ family-data.json";
   }
 
   render();
+}
+
+// ---------- bootstrap: load family-data.json from beside this file ----------
+(function () {
+  "use strict";
+  function showLoadError() {
+    var block = document.getElementById("ancestorsBlock");
+    if (block) block.hidden = true;
+    var label = document.getElementById("treeLabel");
+    if (label) label.textContent = "โหลดข้อมูลไม่สำเร็จ";
+    var tree = document.getElementById("tree");
+    if (tree) {
+      tree.innerHTML =
+        '<div class="empty-state load-error">' +
+        '<p><b>โหลด family-data.json ไม่สำเร็จ</b></p>' +
+        '<p>ถ้าเปิดไฟล์ index.html นี้ด้วยการดับเบิลคลิกโดยตรง (file://) เบราว์เซอร์จะบล็อกไม่ให้โหลดไฟล์ข้อมูลแยกได้ — เป็นข้อจำกัดด้านความปลอดภัยของเบราว์เซอร์เอง ไม่ใช่ไฟล์เสีย</p>' +
+        '<p>วิธีแก้: เปิดผ่านเว็บเซิร์ฟเวอร์ในเครื่อง หรือโฮสต์บน GitHub Pages — ดูคำสั่งแบบละเอียดใน README.md</p>' +
+        '</div>';
+    }
+  }
+
+  fetch("./family-data.json")
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(function (data) {
+      initApp(data);
+    })
+    .catch(function (err) {
+      console.error("โหลด family-data.json ไม่สำเร็จ:", err);
+      showLoadError();
+    });
 })();
 </script>
 
