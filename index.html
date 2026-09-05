@@ -209,6 +209,10 @@
   }
   .tag.adopted { background: var(--gold); color: #2a2110; }
   .chip-phone { flex: none; color: var(--jade); opacity: 0.8; display: flex; }
+  .person-thai {
+    display: block; font-size: 12px; color: var(--ink-soft);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+  }
 
   /* ---------- Detail overlay ---------- */
   .overlay {
@@ -238,7 +242,8 @@
   .panel-head { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
   .panel-head .avatar { width: 56px; height: 56px; font-size: 24px; }
   .panel-head h2 { margin: 0; font-family: var(--font-display); font-size: 25px; font-weight: 700; }
-  .panel-head .gens { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .panel-head .thai-name { font-size: 13.5px; color: var(--ink-soft); margin-top: 1px; }
+  .panel-head .gens { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
 
   .panel-section { margin-top: 18px; }
   .panel-section h3 {
@@ -246,19 +251,37 @@
     color: var(--ink-faint); font-weight: 700;
   }
   .info-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    padding: 11px 13px; background: var(--paper-raised); border: 1px solid var(--line);
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 13px; background: var(--paper-raised); border: 1px solid var(--line);
     border-radius: 11px; margin-bottom: 8px;
   }
-  .info-row .lab { font-size: 13px; color: var(--ink-soft); }
-  .info-row .val { font-family: var(--font-mono); font-size: 14.5px; font-variant-numeric: tabular-nums; }
-  .info-row .val.empty { font-family: var(--font-body); color: var(--ink-faint); font-style: normal; }
+  .info-icon {
+    flex: none; width: 30px; height: 30px; border-radius: 8px;
+    background: var(--paper-sunken); color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .info-body { flex: 1; min-width: 0; }
+  .info-label { display: block; font-size: 11px; color: var(--ink-faint); }
+  .info-value {
+    display: block; font-size: 14.5px; word-break: break-word;
+  }
+  .info-value.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .info-value.empty { color: var(--ink-faint); }
   .call-btn {
     flex: none; display: inline-flex; align-items: center; gap: 6px;
     background: var(--jade); color: var(--paper-raised); text-decoration: none;
     font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px;
   }
-  .spouse-name { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+  .spouse-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .spouse-name { font-family: var(--font-display); font-weight: 600; font-size: 15.5px; }
+  .spouse-thai { font-size: 12.5px; color: var(--ink-soft); }
+  .extra-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 9px 13px; background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 10px; margin-bottom: 6px;
+  }
+  .extra-row .k { flex: none; font-size: 12.5px; color: var(--ink-soft); }
+  .extra-row .v { flex: 1; text-align: right; font-size: 14px; word-break: break-word; }
 
   .parent-link {
     display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
@@ -286,21 +309,30 @@
   ============================================================
   แก้ไขคน/เพิ่มคนใหม่ได้โดยแก้ JSON ในบล็อก <script id="family-data">
   ด้านล่างนี้โดยตรง แล้วบันทึกไฟล์ แล้วรีเฟรชหน้าเว็บ — ไม่ต้องแก้โค้ดส่วนอื่น
+  (รายละเอียดเต็ม ๆ พร้อมตัวอย่างอยู่ใน README.md ที่แนบมาด้วย)
 
-  โครงสร้างแต่ละคน:
+  โครงสร้างแต่ละคนใน "people":
     id            : รหัสไม่ซ้ำ เช่น "p52"
     gen           : ลำดับรุ่นเป็นตัวเลข (ตัวที่ 20 = 第二十代)
     genLabel      : ป้ายรุ่นภาษาจีนต้นฉบับ เช่น "第二十代"
-    name          : ชื่อ (ภาษาจีน)
+    name          : ชื่อภาษาจีน
+    thaiName      : ชื่อไทย หรือ null ถ้าไม่มี
     order         : ลำดับการเกิด เช่น "長子" "次女" "義女" หรือ null ถ้าไม่มี
     gender        : "M" หรือ "F"
     parentId      : id ของพ่อ/แม่ในสายนี้ หรือ null ถ้าเป็นต้นตระกูล
-    spouseName    : ชื่อคู่สมรส หรือ null
-    spousePhone   : เบอร์คู่สมรส หรือ null
-    phone         : เบอร์ของตัวเอง หรือ null
+    phone         : เบอร์โทรของตัวเอง หรือ null
+    email         : อีเมล หรือ null
+    lineId        : ไอดีไลน์ หรือ null
+    wechatId      : ไอดีวีแชท หรือ null
+    address       : ที่อยู่ หรือ null
     adopted       : true ถ้าเป็นบุตรบุญธรรม (義子/義女)
     photo         : URL หรือ data URI ของรูปภาพ หรือ null (ยังไม่มี = ใช้ตัวอักษรย่อแทน)
-    notes         : หมายเหตุอื่น ๆ หรือ null
+    notes         : รายละเอียดเพิ่มเติมแบบข้อความอิสระ หรือ null
+    extra         : [{ "label": "...", "value": "..." }, ...] สำหรับข้อมูลอื่น ๆ ที่ไม่มีช่องสำเร็จรูป
+                    เช่น เฟซบุ๊ก วันเกิด อาชีพ — ใส่กี่รายการก็ได้ หรือ [] ถ้าไม่มี
+    spouse        : null ถ้าไม่มีข้อมูลคู่สมรส หรือ object ที่มีฟิลด์แบบเดียวกับคนได้แก่
+                    { "name", "thaiName", "phone", "email", "lineId", "wechatId",
+                      "address", "extra" } — ใส่เฉพาะฟิลด์ที่มีข้อมูลก็ได้
 -->
 <script id="family-data" type="application/json">
 {
@@ -311,68 +343,72 @@
     "updated": "2026-09-05"
   },
   "people": [
-    { "id": "p1",  "gen": 1,  "genLabel": "一世祖",   "name": "許斌",   "order": null,   "gender": "M", "parentId": null, "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p2",  "gen": 2,  "genLabel": "二世祖",   "name": "許世",   "order": null,   "gender": "M", "parentId": "p1", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p3",  "gen": 3,  "genLabel": "第三代",   "name": "許海",   "order": null,   "gender": "M", "parentId": "p2", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p4",  "gen": 4,  "genLabel": "第四代",   "name": "許英",   "order": null,   "gender": "M", "parentId": "p3", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p5",  "gen": 5,  "genLabel": "第五代",   "name": "許尽巨", "order": null,   "gender": "M", "parentId": "p4", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p6",  "gen": 6,  "genLabel": "第六代",   "name": "許克让", "order": null,   "gender": "M", "parentId": "p5", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p7",  "gen": 7,  "genLabel": "第七代",   "name": "許治純", "order": null,   "gender": "M", "parentId": "p6", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p8",  "gen": 8,  "genLabel": "第八代",   "name": "許登弟", "order": null,   "gender": "M", "parentId": "p7", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p9",  "gen": 9,  "genLabel": "第九代",   "name": "許存爵", "order": null,   "gender": "M", "parentId": "p8", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p10", "gen": 10, "genLabel": "第十代",   "name": "許如珠", "order": null,   "gender": "M", "parentId": "p9", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p11", "gen": 11, "genLabel": "第十一代", "name": "許聯科", "order": null,   "gender": "M", "parentId": "p10","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p12", "gen": 12, "genLabel": "第十二代", "name": "許國显", "order": null,   "gender": "M", "parentId": "p11","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p13", "gen": 13, "genLabel": "第十三代", "name": "許天金", "order": null,   "gender": "M", "parentId": "p12","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p14", "gen": 14, "genLabel": "第十四代", "name": "許大文", "order": null,   "gender": "M", "parentId": "p13","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p15", "gen": 15, "genLabel": "第十五代", "name": "許志安", "order": null,   "gender": "M", "parentId": "p14","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p16", "gen": 16, "genLabel": "第十六代", "name": "許德金", "order": null,   "gender": "M", "parentId": "p15","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p17", "gen": 17, "genLabel": "第十七代", "name": "許开凤", "order": null,   "gender": "M", "parentId": "p16","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p18", "gen": 18, "genLabel": "第十八代", "name": "許連壽", "order": null,   "gender": "M", "parentId": "p17","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p19", "gen": 19, "genLabel": "第十九代", "name": "許常學", "order": null,   "gender": "M", "parentId": "p18","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
-    { "id": "p20", "gen": 20, "genLabel": "第二十代", "name": "許慶洪", "order": null,   "gender": "M", "parentId": "p19","spouseName": "盤妹蔥", "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p1",  "gen": 1,  "genLabel": "一世祖",   "name": "許斌",   "thaiName": null, "order": null, "gender": "M", "parentId": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p2",  "gen": 2,  "genLabel": "二世祖",   "name": "許世",   "thaiName": null, "order": null, "gender": "M", "parentId": "p1", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p3",  "gen": 3,  "genLabel": "第三代",   "name": "許海",   "thaiName": null, "order": null, "gender": "M", "parentId": "p2", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p4",  "gen": 4,  "genLabel": "第四代",   "name": "許英",   "thaiName": null, "order": null, "gender": "M", "parentId": "p3", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p5",  "gen": 5,  "genLabel": "第五代",   "name": "許尽巨", "thaiName": null, "order": null, "gender": "M", "parentId": "p4", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p6",  "gen": 6,  "genLabel": "第六代",   "name": "許克让", "thaiName": null, "order": null, "gender": "M", "parentId": "p5", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p7",  "gen": 7,  "genLabel": "第七代",   "name": "許治純", "thaiName": null, "order": null, "gender": "M", "parentId": "p6", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p8",  "gen": 8,  "genLabel": "第八代",   "name": "許登弟", "thaiName": null, "order": null, "gender": "M", "parentId": "p7", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p9",  "gen": 9,  "genLabel": "第九代",   "name": "許存爵", "thaiName": null, "order": null, "gender": "M", "parentId": "p8", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p10", "gen": 10, "genLabel": "第十代",   "name": "許如珠", "thaiName": null, "order": null, "gender": "M", "parentId": "p9", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p11", "gen": 11, "genLabel": "第十一代", "name": "許聯科", "thaiName": null, "order": null, "gender": "M", "parentId": "p10", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p12", "gen": 12, "genLabel": "第十二代", "name": "許國显", "thaiName": null, "order": null, "gender": "M", "parentId": "p11", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p13", "gen": 13, "genLabel": "第十三代", "name": "許天金", "thaiName": null, "order": null, "gender": "M", "parentId": "p12", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p14", "gen": 14, "genLabel": "第十四代", "name": "許大文", "thaiName": null, "order": null, "gender": "M", "parentId": "p13", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p15", "gen": 15, "genLabel": "第十五代", "name": "許志安", "thaiName": null, "order": null, "gender": "M", "parentId": "p14", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p16", "gen": 16, "genLabel": "第十六代", "name": "許德金", "thaiName": null, "order": null, "gender": "M", "parentId": "p15", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p17", "gen": 17, "genLabel": "第十七代", "name": "許开凤", "thaiName": null, "order": null, "gender": "M", "parentId": "p16", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p18", "gen": 18, "genLabel": "第十八代", "name": "許連壽", "thaiName": null, "order": null, "gender": "M", "parentId": "p17", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p19", "gen": 19, "genLabel": "第十九代", "name": "許常學", "thaiName": null, "order": null, "gender": "M", "parentId": "p18", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p20", "gen": 20, "genLabel": "第二十代", "name": "許慶洪", "thaiName": null, "order": null, "gender": "M", "parentId": "p19", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
+      "spouse": { "name": "盤妹蔥", "thaiName": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
 
-    { "id": "p21", "gen": 21, "genLabel": "第二十一代", "name": "許永富", "order": "長子", "gender": "M", "parentId": "p20", "spouseName": null,     "spousePhone": null,        "phone": "0899978820", "adopted": false, "photo": null, "notes": null },
-    { "id": "p22", "gen": 21, "genLabel": "第二十一代", "name": "許美蘭", "order": "女",   "gender": "F", "parentId": "p20", "spouseName": "趙華",   "spousePhone": null,        "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p23", "gen": 21, "genLabel": "第二十一代", "name": "許永清", "order": "三子", "gender": "M", "parentId": "p20", "spouseName": "字在玲", "spousePhone": "0812951069","phone": "0818616127", "adopted": false, "photo": null, "notes": null },
-    { "id": "p24", "gen": 21, "genLabel": "第二十一代", "name": "許永財", "order": "五子", "gender": "M", "parentId": "p20", "spouseName": "紅歡",   "spousePhone": "0624266052","phone": "0892616053", "adopted": false, "photo": null, "notes": null },
+    { "id": "p21", "gen": 21, "genLabel": "第二十一代", "name": "許永富", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p20", "phone": "0899978820", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p22", "gen": 21, "genLabel": "第二十一代", "name": "許美蘭", "thaiName": null, "order": "女", "gender": "F", "parentId": "p20", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
+      "spouse": { "name": "趙華", "thaiName": null, "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
+    { "id": "p23", "gen": 21, "genLabel": "第二十一代", "name": "許永清", "thaiName": null, "order": "三子", "gender": "M", "parentId": "p20", "phone": "0818616127", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
+      "spouse": { "name": "字在玲", "thaiName": null, "phone": "0812951069", "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
+    { "id": "p24", "gen": 21, "genLabel": "第二十一代", "name": "許永財", "thaiName": null, "order": "五子", "gender": "M", "parentId": "p20", "phone": "0892616053", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [],
+      "spouse": { "name": "紅歡", "thaiName": null, "phone": "0624266052", "email": null, "lineId": null, "wechatId": null, "address": null, "extra": [] } },
 
-    { "id": "p25", "gen": 22, "genLabel": "第二十二代", "name": "許金菊", "order": "女",   "gender": "F", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p26", "gen": 22, "genLabel": "第二十二代", "name": "許金榮", "order": "子",   "gender": "M", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p27", "gen": 22, "genLabel": "第二十二代", "name": "許金美", "order": "女",   "gender": "F", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p25", "gen": 22, "genLabel": "第二十二代", "name": "許金菊", "thaiName": null, "order": "女", "gender": "F", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p26", "gen": 22, "genLabel": "第二十二代", "name": "許金榮", "thaiName": null, "order": "子", "gender": "M", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p27", "gen": 22, "genLabel": "第二十二代", "name": "許金美", "thaiName": null, "order": "女", "gender": "F", "parentId": "p21", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p28", "gen": 22, "genLabel": "第二十二代", "name": "許金平", "order": "長子", "gender": "M", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p29", "gen": 22, "genLabel": "第二十二代", "name": "許金麗", "order": "長女", "gender": "F", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p30", "gen": 22, "genLabel": "第二十二代", "name": "許金富", "order": "次子", "gender": "M", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p31", "gen": 22, "genLabel": "第二十二代", "name": "許金惠", "order": "次女", "gender": "F", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": "0925036558", "adopted": false, "photo": null, "notes": null },
+    { "id": "p28", "gen": 22, "genLabel": "第二十二代", "name": "許金平", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p29", "gen": 22, "genLabel": "第二十二代", "name": "許金麗", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p30", "gen": 22, "genLabel": "第二十二代", "name": "許金富", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p22", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p31", "gen": 22, "genLabel": "第二十二代", "name": "許金惠", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p22", "phone": "0925036558", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p32", "gen": 22, "genLabel": "第二十二代", "name": "許金金", "order": "長女", "gender": "F", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p33", "gen": 22, "genLabel": "第二十二代", "name": "許金銀", "order": "長子", "gender": "M", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p34", "gen": 22, "genLabel": "第二十二代", "name": "許金慧", "order": "次女", "gender": "F", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p32", "gen": 22, "genLabel": "第二十二代", "name": "許金金", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p33", "gen": 22, "genLabel": "第二十二代", "name": "許金銀", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p34", "gen": 22, "genLabel": "第二十二代", "name": "許金慧", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p23", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p35", "gen": 22, "genLabel": "第二十二代", "name": "許金寶", "order": "長子", "gender": "M", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p36", "gen": 22, "genLabel": "第二十二代", "name": "許金恆", "order": "次子", "gender": "M", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": "0638151584", "adopted": false, "photo": null, "notes": null },
-    { "id": "p37", "gen": 22, "genLabel": "第二十二代", "name": "許金玉", "order": "女",   "gender": "F", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
-    { "id": "p38", "gen": 22, "genLabel": "第二十二代", "name": "許玉林", "order": "義女", "gender": "F", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": true,  "photo": null, "notes": "บุตรสาวบุญธรรม" },
+    { "id": "p35", "gen": 22, "genLabel": "第二十二代", "name": "許金寶", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p36", "gen": 22, "genLabel": "第二十二代", "name": "許金恆", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p24", "phone": "0638151584", "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p37", "gen": 22, "genLabel": "第二十二代", "name": "許金玉", "thaiName": null, "order": "女", "gender": "F", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p38", "gen": 22, "genLabel": "第二十二代", "name": "許玉林", "thaiName": null, "order": "義女", "gender": "F", "parentId": "p24", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": true, "photo": null, "notes": "บุตรสาวบุญธรรม", "extra": [], "spouse": null },
 
-    { "id": "p39", "gen": 23, "genLabel": "第二十三代", "name": "許定玟", "order": "長女", "gender": "F", "parentId": "p25", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p40", "gen": 23, "genLabel": "第二十三代", "name": "許定邦", "order": "長子", "gender": "M", "parentId": "p25", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p39", "gen": 23, "genLabel": "第二十三代", "name": "許定玟", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p25", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p40", "gen": 23, "genLabel": "第二十三代", "name": "許定邦", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p25", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p41", "gen": 23, "genLabel": "第二十三代", "name": "許定芸", "order": "長女", "gender": "F", "parentId": "p26", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p41", "gen": 23, "genLabel": "第二十三代", "name": "許定芸", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p26", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p42", "gen": 23, "genLabel": "第二十三代", "name": "許銀龍", "order": "長子", "gender": "M", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p43", "gen": 23, "genLabel": "第二十三代", "name": "許銀仙", "order": "長女", "gender": "F", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p44", "gen": 23, "genLabel": "第二十三代", "name": "許銀銖", "order": "次女", "gender": "F", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p42", "gen": 23, "genLabel": "第二十三代", "name": "許銀龍", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p43", "gen": 23, "genLabel": "第二十三代", "name": "許銀仙", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p44", "gen": 23, "genLabel": "第二十三代", "name": "許銀銖", "thaiName": null, "order": "次女", "gender": "F", "parentId": "p28", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p45", "gen": 23, "genLabel": "第二十三代", "name": "許銀香", "order": "長女", "gender": "F", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p46", "gen": 23, "genLabel": "第二十三代", "name": "許銀貴", "order": "長子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p47", "gen": 23, "genLabel": "第二十三代", "name": "許銀強", "order": "次子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p48", "gen": 23, "genLabel": "第二十三代", "name": "許銀雲", "order": "三子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p45", "gen": 23, "genLabel": "第二十三代", "name": "許銀香", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p46", "gen": 23, "genLabel": "第二十三代", "name": "許銀貴", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p47", "gen": 23, "genLabel": "第二十三代", "name": "許銀強", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p48", "gen": 23, "genLabel": "第二十三代", "name": "許銀雲", "thaiName": null, "order": "三子", "gender": "M", "parentId": "p29", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p49", "gen": 23, "genLabel": "第二十三代", "name": "許銀和", "order": "長子", "gender": "M", "parentId": "p31", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
-    { "id": "p50", "gen": 23, "genLabel": "第二十三代", "name": "許銀偉", "order": "次子", "gender": "M", "parentId": "p31", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p49", "gen": 23, "genLabel": "第二十三代", "name": "許銀和", "thaiName": null, "order": "長子", "gender": "M", "parentId": "p31", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
+    { "id": "p50", "gen": 23, "genLabel": "第二十三代", "name": "許銀偉", "thaiName": null, "order": "次子", "gender": "M", "parentId": "p31", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null },
 
-    { "id": "p51", "gen": 24, "genLabel": "第二十四代", "name": "許賢淑", "order": "長女", "gender": "F", "parentId": "p46", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null }
+    { "id": "p51", "gen": 24, "genLabel": "第二十四代", "name": "許賢淑", "thaiName": null, "order": "長女", "gender": "F", "parentId": "p46", "phone": null, "email": null, "lineId": null, "wechatId": null, "address": null, "adopted": false, "photo": null, "notes": null, "extra": [], "spouse": null }
   ]
 }
 </script>
@@ -388,7 +424,7 @@
     </div>
     <label class="search" id="searchBox">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="searchInput" type="text" inputmode="search" placeholder="ค้นหาชื่อ เช่น 許金菊" autocomplete="off" />
+      <input id="searchInput" type="text" inputmode="search" placeholder="ค้นหาชื่อ (จีน/พินอิน), เบอร์โทร หรือชื่อคู่สมรส" autocomplete="off" />
       <button class="clear" id="clearSearch" aria-label="ล้างคำค้นหา">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -447,6 +483,63 @@
     "子": "บุตรชาย", "女": "บุตรสาว", "義女": "บุตรสาวบุญธรรม", "義子": "บุตรชายบุญธรรม"
   };
 
+  // Traditional -> Simplified lookup for the characters actually used in
+  // this family's names, so searching in either script finds the same
+  // person. Falls through unchanged for characters not listed (already
+  // simplified, or identical in both scripts).
+  var CANON_MAP = {
+    "許": "许", "聯": "联", "國": "国", "顯": "显", "壽": "寿", "學": "学",
+    "開": "开", "連": "连", "龍": "龙", "紅": "红", "歡": "欢", "蘭": "兰",
+    "銀": "银", "貴": "贵", "強": "强", "雲": "云", "賢": "贤", "寶": "宝",
+    "恆": "恒", "財": "财", "慶": "庆", "榮": "荣", "麗": "丽", "純": "纯",
+    "讓": "让", "銖": "铢", "趙": "赵", "蔥": "葱", "盡": "尽", "鳳": "凤",
+    "偉": "伟", "盤": "盘", "華": "华"
+  };
+  // Character -> plain (tone-less) Hanyu Pinyin, covering every character
+  // used in the built-in family data, both traditional and simplified
+  // forms. A newly added name outside this list still searches fine by
+  // exact / simplified-traditional match — it just won't match by pinyin.
+  var PINYIN_MAP = {
+    "許": "xu", "许": "xu", "斌": "bin", "世": "shi", "海": "hai", "英": "ying",
+    "尽": "jin", "盡": "jin", "巨": "ju", "克": "ke", "让": "rang", "讓": "rang",
+    "治": "zhi", "純": "chun", "纯": "chun", "登": "deng", "弟": "di",
+    "存": "cun", "爵": "jue", "如": "ru", "珠": "zhu", "聯": "lian", "联": "lian",
+    "科": "ke", "國": "guo", "国": "guo", "显": "xian", "顯": "xian",
+    "天": "tian", "金": "jin", "大": "da", "文": "wen", "志": "zhi", "安": "an",
+    "德": "de", "开": "kai", "開": "kai", "凤": "feng", "鳳": "feng",
+    "連": "lian", "连": "lian", "壽": "shou", "寿": "shou", "常": "chang",
+    "學": "xue", "学": "xue", "慶": "qing", "庆": "qing", "洪": "hong",
+    "永": "yong", "富": "fu", "美": "mei", "蘭": "lan", "兰": "lan",
+    "清": "qing", "財": "cai", "财": "cai", "菊": "ju", "榮": "rong", "荣": "rong",
+    "平": "ping", "麗": "li", "丽": "li", "惠": "hui", "銀": "yin", "银": "yin",
+    "寶": "bao", "宝": "bao", "恆": "heng", "恒": "heng", "玉": "yu",
+    "林": "lin", "定": "ding", "玟": "wen", "邦": "bang", "芸": "yun",
+    "龍": "long", "龙": "long", "仙": "xian", "銖": "zhu", "铢": "zhu",
+    "香": "xiang", "貴": "gui", "贵": "gui", "強": "qiang", "强": "qiang",
+    "雲": "yun", "云": "yun", "和": "he", "偉": "wei", "伟": "wei",
+    "賢": "xian", "贤": "xian", "淑": "shu", "盤": "pan", "盘": "pan",
+    "妹": "mei", "蔥": "cong", "葱": "cong", "趙": "zhao", "赵": "zhao",
+    "華": "hua", "华": "hua", "字": "zi", "在": "zai", "玲": "ling",
+    "紅": "hong", "红": "hong", "歡": "huan", "欢": "huan"
+  };
+  function normalizeHan(str) {
+    if (!str) return "";
+    var out = "";
+    for (var i = 0; i < str.length; i++) {
+      var ch = str[i];
+      out += CANON_MAP[ch] || ch;
+    }
+    return out.toLowerCase();
+  }
+  function toPinyinFlat(str) {
+    if (!str) return "";
+    var out = "";
+    for (var i = 0; i < str.length; i++) {
+      out += PINYIN_MAP[str[i]] || str[i];
+    }
+    return out.toLowerCase().replace(/\s+/g, "");
+  }
+
   var ROOT_ID = "p1";
   var TREE_ROOT_ID = "p20"; // where the branching, interactive part begins
   var expanded = {};
@@ -478,10 +571,37 @@
     return name.slice(-1);
   }
 
+  function searchableFields(obj) {
+    if (!obj) return [];
+    var arr = [obj.name, obj.thaiName, obj.phone, obj.email, obj.lineId, obj.wechatId, obj.address, obj.notes];
+    if (obj.extra) {
+      obj.extra.forEach(function (item) {
+        arr.push(item.label);
+        arr.push(item.value);
+      });
+    }
+    return arr.filter(function (v) { return v; });
+  }
+
+  // Matches on: exact substring, Simplified<->Traditional Chinese either
+  // way, tone-less Pinyin, phone digits, and the same fields on the
+  // spouse — so a phone number, a spouse's name, or "xujinju" all find
+  // the right person.
   function matchesQuery(p) {
     if (!searchQuery) return false;
-    if (p.name.indexOf(searchQuery) !== -1) return true;
-    if (p.spouseName && p.spouseName.indexOf(searchQuery) !== -1) return true;
+    var q = searchQuery.trim();
+    if (!q) return false;
+    var qNorm = normalizeHan(q);
+    var qPinyin = toPinyinFlat(q);
+    var qDigits = q.replace(/\D/g, "");
+    var fields = searchableFields(p).concat(searchableFields(p.spouse));
+    for (var i = 0; i < fields.length; i++) {
+      var val = String(fields[i]);
+      if (val.indexOf(q) !== -1) return true;
+      if (normalizeHan(val).indexOf(qNorm) !== -1) return true;
+      if (qPinyin && toPinyinFlat(val).indexOf(qPinyin) !== -1) return true;
+      if (qDigits && qDigits.length >= 3 && val.replace(/\D/g, "").indexOf(qDigits) !== -1) return true;
+    }
     return false;
   }
 
@@ -503,6 +623,58 @@
 
   function phoneIconSvg() {
     return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  }
+  function mailIconSvg() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m3 6.5 9 6.5 9-6.5"/></svg>';
+  }
+  function chatIconSvg() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4 9 9 0 0 1-3.9-.9L3 21l1.9-5.2A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+  }
+  function pinIconSvg() {
+    return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.7"/></svg>';
+  }
+
+  // Builds the contact-row list for a person or a spouse object: one row
+  // per field that actually has a value, in a fixed, predictable order.
+  function contactRows(obj) {
+    var rows = [];
+    if (!obj) return rows;
+    if (obj.phone) {
+      rows.push({
+        icon: phoneIconSvg(), label: "เบอร์โทร", value: fmtPhone(obj.phone), mono: true,
+        action: '<a class="call-btn" href="tel:' + escapeHtml(obj.phone) + '">' + phoneIconSvg() + ' โทร</a>'
+      });
+    }
+    if (obj.email) {
+      rows.push({
+        icon: mailIconSvg(), label: "อีเมล", value: obj.email, mono: false,
+        action: '<a class="call-btn" href="mailto:' + escapeHtml(obj.email) + '">' + mailIconSvg() + ' ส่งเมล</a>'
+      });
+    }
+    if (obj.lineId) rows.push({ icon: chatIconSvg(), label: "LINE", value: obj.lineId, mono: false, action: "" });
+    if (obj.wechatId) rows.push({ icon: chatIconSvg(), label: "WeChat", value: obj.wechatId, mono: false, action: "" });
+    if (obj.address) rows.push({ icon: pinIconSvg(), label: "ที่อยู่", value: obj.address, mono: false, action: "" });
+    return rows;
+  }
+
+  function contactRowsHtml(obj, emptyText) {
+    var rows = contactRows(obj);
+    if (!rows.length) {
+      return '<div class="info-row"><span class="info-body"><span class="info-value empty">' + escapeHtml(emptyText) + '</span></span></div>';
+    }
+    return rows.map(function (r) {
+      return '<div class="info-row"><span class="info-icon">' + r.icon + '</span>' +
+        '<span class="info-body"><span class="info-label">' + escapeHtml(r.label) + '</span>' +
+        '<span class="info-value' + (r.mono ? " mono" : "") + '">' + escapeHtml(r.value) + '</span></span>' +
+        r.action + '</div>';
+    }).join("");
+  }
+
+  function extraRowsHtml(extra) {
+    if (!extra || !extra.length) return "";
+    return extra.map(function (item) {
+      return '<div class="extra-row"><span class="k">' + escapeHtml(item.label || "") + '</span><span class="v">' + escapeHtml(item.value || "") + '</span></div>';
+    }).join("");
   }
 
   function renderNode(p, searchVisible) {
@@ -529,6 +701,7 @@
     html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
     html += '<span class="person-meta">';
     html += '<span class="person-name">' + highlight(p.name) + '</span>';
+    if (p.thaiName) html += '<span class="person-thai">' + escapeHtml(p.thaiName) + '</span>';
     html += '<span class="person-sub">' + subParts.map(function (s) { return '<span class="tag' + (s === "บุญธรรม" ? " adopted" : "") + '">' + escapeHtml(s) + '</span>'; }).join("") + '</span>';
     html += '</span>';
     if (p.phone) html += '<span class="chip-phone">' + phoneIconSvg() + '</span>';
@@ -609,33 +782,32 @@
 
     html += '<div class="panel-head">';
     html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
-    html += '<div><h2>' + escapeHtml(p.name) + '</h2><div class="gens">';
+    html += '<div><h2>' + escapeHtml(p.name) + '</h2>';
+    if (p.thaiName) html += '<div class="thai-name">' + escapeHtml(p.thaiName) + '</div>';
+    html += '<div class="gens">';
     html += '<span class="tag">รุ่นที่ ' + p.gen + ' · ' + escapeHtml(p.genLabel) + '</span>';
     if (p.order) html += '<span class="tag">' + escapeHtml(ORDER_TH[p.order] || p.order) + '</span>';
     if (p.adopted) html += '<span class="tag adopted">บุตรบุญธรรม</span>';
     html += '</div></div></div>';
 
-    html += '<div class="panel-section"><h3>ข้อมูลติดต่อ</h3>';
-    if (p.phone) {
-      html += '<div class="info-row"><span class="val">' + fmtPhone(p.phone) + '</span>' +
-        '<a class="call-btn" href="tel:' + p.phone + '">' + phoneIconSvg() + ' โทร</a></div>';
-    } else {
-      html += '<div class="info-row"><span class="val empty">ไม่มีข้อมูลเบอร์โทร</span></div>';
-    }
-    html += '</div>';
+    html += '<div class="panel-section"><h3>ข้อมูลติดต่อ</h3>' + contactRowsHtml(p, "ยังไม่มีข้อมูลติดต่อ") + '</div>';
 
-    if (p.spouseName) {
-      html += '<div class="panel-section"><h3>คู่สมรส</h3><div class="info-row"><span class="spouse-name">' + escapeHtml(p.spouseName) + '</span>';
-      if (p.spousePhone) {
-        html += '<a class="call-btn" href="tel:' + p.spousePhone + '">' + phoneIconSvg() + ' ' + fmtPhone(p.spousePhone) + '</a>';
-      } else {
-        html += '<span class="val empty">ไม่มีเบอร์โทร</span>';
-      }
-      html += '</div></div>';
+    if (p.extra && p.extra.length) {
+      html += '<div class="panel-section"><h3>ข้อมูลอื่น ๆ</h3>' + extraRowsHtml(p.extra) + '</div>';
+    }
+
+    if (p.spouse && p.spouse.name) {
+      html += '<div class="panel-section"><h3>คู่สมรส</h3>';
+      html += '<div class="spouse-head"><span class="spouse-name">' + escapeHtml(p.spouse.name) + '</span>';
+      if (p.spouse.thaiName) html += '<span class="spouse-thai">' + escapeHtml(p.spouse.thaiName) + '</span>';
+      html += '</div>';
+      html += contactRowsHtml(p.spouse, "ยังไม่มีข้อมูลติดต่อคู่สมรส");
+      html += extraRowsHtml(p.spouse.extra);
+      html += '</div>';
     }
 
     if (p.notes) {
-      html += '<div class="panel-section"><h3>หมายเหตุ</h3><p class="muted">' + escapeHtml(p.notes) + '</p></div>';
+      html += '<div class="panel-section"><h3>รายละเอียดเพิ่มเติม</h3><p class="muted">' + escapeHtml(p.notes) + '</p></div>';
     }
 
     if (parent) {
