@@ -1,0 +1,726 @@
+<title>許氏族谱</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* ============ Design tokens ============
+     Palette: celadon rice-paper ground, ink-blue text, vermillion
+     seal-stamp accent, jade for structure/links. Grounded in the
+     material world of a Chinese/Mien clan register (家先簿/族谱):
+     brush-ink columns, a red name-chop, paper the colour of old jade.
+  */
+  :root {
+    --paper: #E7EAE1;
+    --paper-raised: #F5F7F1;
+    --paper-sunken: #DCE0D5;
+    --ink: #1B2321;
+    --ink-soft: #4E594F;
+    --ink-faint: #7C877D;
+    --line: #C7CEC1;
+    --seal: #A6362A;
+    --seal-soft: #A6362A1a;
+    --jade: #3F6B55;
+    --jade-soft: #3F6B551a;
+    --gold: #93732F;
+    --shadow: 0 12px 32px -12px rgb(27 35 33 / 0.28);
+    --font-display: "Noto Serif SC", "Noto Serif", serif;
+    --font-body: "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141815;
+      --paper-raised: #1D2420;
+      --paper-sunken: #0F1310;
+      --ink: #E7EAE1;
+      --ink-soft: #A9B2A6;
+      --ink-faint: #778175;
+      --line: #2B332C;
+      --seal: #DE6152;
+      --seal-soft: #DE61522b;
+      --jade: #7CB495;
+      --jade-soft: #7CB4952b;
+      --gold: #CBA75B;
+      --shadow: 0 16px 40px -14px rgb(0 0 0 / 0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141815;
+    --paper-raised: #1D2420;
+    --paper-sunken: #0F1310;
+    --ink: #E7EAE1;
+    --ink-soft: #A9B2A6;
+    --ink-faint: #778175;
+    --line: #2B332C;
+    --seal: #DE6152;
+    --seal-soft: #DE61522b;
+    --jade: #7CB495;
+    --jade-soft: #7CB4952b;
+    --gold: #CBA75B;
+    --shadow: 0 16px 40px -14px rgb(0 0 0 / 0.55);
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  ::selection { background: var(--seal-soft); }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  a { color: var(--jade); }
+  button { font: inherit; color: inherit; }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+
+  /* ---------- Header ---------- */
+  header.top {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-inner { max-width: 720px; margin: 0 auto; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .title-row { display: flex; align-items: center; gap: 12px; }
+  .chop {
+    flex: none; width: 42px; height: 42px; border-radius: 9px;
+    background: var(--seal); color: #F6ECE8;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 22px; font-weight: 700;
+    box-shadow: var(--shadow);
+    transform: rotate(-2deg);
+  }
+  .title-text h1 {
+    margin: 0; font-family: var(--font-display); font-weight: 700;
+    font-size: 22px; letter-spacing: 0.02em; text-wrap: balance;
+  }
+  .title-text p { margin: 1px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 10px; padding: 9px 12px;
+  }
+  .search svg { flex: none; opacity: 0.6; }
+  .search input {
+    border: none; background: transparent; outline: none; width: 100%;
+    font: inherit; font-size: 15px; color: var(--ink);
+  }
+  .search input::placeholder { color: var(--ink-faint); }
+  .search button.clear {
+    flex: none; border: none; background: none; cursor: pointer;
+    color: var(--ink-faint); padding: 2px; display: none;
+  }
+  .search.has-query button.clear { display: block; }
+
+  /* ---------- Section headers ---------- */
+  .section-label {
+    font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600; margin: 28px 4px 10px;
+  }
+
+  /* ---------- Ancestor line (gen 1–19) ---------- */
+  .ancestors-toggle {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 14px; margin-top: 22px;
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+    cursor: pointer; text-align: left;
+  }
+  .ancestors-toggle .lbl { font-size: 14.5px; }
+  .ancestors-toggle .lbl b { font-family: var(--font-display); }
+  .ancestors-toggle .sub { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .ancestors-toggle .chev { transition: transform 0.18s ease; opacity: 0.65; }
+  .ancestors-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+  .ancestor-line {
+    overflow: hidden; max-height: 0; transition: max-height 0.24s ease;
+  }
+  .ancestor-line.open { max-height: 900px; }
+  .ancestor-line-inner {
+    margin-top: 10px; padding: 6px 4px 4px 20px; border-left: 2px solid var(--line);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .ancestor-row {
+    display: flex; align-items: baseline; gap: 10px; padding: 5px 8px;
+    border-radius: 7px; font-size: 14px;
+  }
+  .ancestor-row:hover { background: var(--paper-raised); }
+  .ancestor-row .gi { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); width: 40px; flex: none; font-variant-numeric: tabular-nums; }
+  .ancestor-row .gn { font-family: var(--font-display); font-weight: 600; }
+  .ancestor-row .gl { color: var(--ink-faint); font-size: 12px; }
+  .ancestor-line-inner .arrow { padding: 4px 8px 2px; color: var(--jade); font-size: 12.5px; }
+
+  /* ---------- Tree ---------- */
+  .tree { margin-top: 10px; }
+  .node { position: relative; }
+  .node-children {
+    margin-left: 19px; padding-left: 19px; border-left: 2px solid var(--line);
+  }
+  .node-row {
+    display: flex; align-items: center; gap: 4px; padding: 3px 0;
+  }
+  .expand-btn {
+    flex: none; width: 26px; height: 26px; border-radius: 7px; border: none;
+    background: transparent; cursor: pointer; color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .expand-btn:hover { background: var(--paper-raised); }
+  .expand-btn svg { transition: transform 0.16s ease; }
+  .expand-btn[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .expand-btn.spacer { visibility: hidden; }
+
+  .person-chip {
+    flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0;
+    padding: 8px 10px; border-radius: 10px; border: 1px solid transparent;
+    background: var(--paper-raised); cursor: pointer; text-align: left;
+  }
+  .person-chip:hover { border-color: var(--line); }
+  .person-chip:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
+  .avatar {
+    flex: none; width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 600; font-size: 15px;
+    color: var(--seal); background: var(--seal-soft);
+    border: 1px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  }
+  .avatar.gender-f { color: var(--jade); background: var(--jade-soft); border-color: color-mix(in srgb, var(--jade) 35%, transparent); }
+  .person-meta { min-width: 0; flex: 1; }
+  .person-name {
+    font-family: var(--font-display); font-weight: 600; font-size: 15.5px;
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .person-name mark { background: var(--seal-soft); color: var(--seal); border-radius: 3px; }
+  .person-sub {
+    display: flex; gap: 6px; align-items: center; margin-top: 1px;
+    font-size: 11.5px; color: var(--ink-soft); white-space: nowrap; overflow: hidden;
+  }
+  .tag {
+    flex: none; font-size: 10.5px; padding: 1px 6px; border-radius: 999px;
+    background: var(--paper-sunken); color: var(--ink-soft); font-weight: 600;
+  }
+  .tag.adopted { background: var(--gold); color: #2a2110; }
+  .chip-phone { flex: none; color: var(--jade); opacity: 0.8; display: flex; }
+
+  /* ---------- Detail overlay ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgb(20 24 21 / 0.45);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.18s ease; z-index: 50;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .panel {
+    width: 100%; max-width: 460px; max-height: 86vh; overflow-y: auto;
+    background: var(--paper); border-radius: 18px 18px 0 0;
+    box-shadow: var(--shadow); padding: 20px 20px 28px;
+    transform: translateY(16px); transition: transform 0.2s ease;
+  }
+  .overlay.open .panel { transform: translateY(0); }
+  @media (min-width: 640px) {
+    .overlay { align-items: center; }
+    .panel { border-radius: 16px; margin: 24px; }
+  }
+
+  .panel-top { display: flex; justify-content: flex-end; }
+  .panel-close {
+    border: none; background: var(--paper-raised); border-radius: 8px;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--ink-soft);
+  }
+  .panel-head { display: flex; gap: 14px; align-items: center; margin: 4px 0 18px; }
+  .panel-head .avatar { width: 56px; height: 56px; font-size: 24px; }
+  .panel-head h2 { margin: 0; font-family: var(--font-display); font-size: 25px; font-weight: 700; }
+  .panel-head .gens { margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .panel-section { margin-top: 18px; }
+  .panel-section h3 {
+    margin: 0 0 8px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-faint); font-weight: 700;
+  }
+  .info-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 11px 13px; background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 11px; margin-bottom: 8px;
+  }
+  .info-row .lab { font-size: 13px; color: var(--ink-soft); }
+  .info-row .val { font-family: var(--font-mono); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  .info-row .val.empty { font-family: var(--font-body); color: var(--ink-faint); font-style: normal; }
+  .call-btn {
+    flex: none; display: inline-flex; align-items: center; gap: 6px;
+    background: var(--jade); color: var(--paper-raised); text-decoration: none;
+    font-size: 12.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px;
+  }
+  .spouse-name { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+
+  .parent-link {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: none; border: none; padding: 0; color: var(--jade); font-size: 14px; font-weight: 600;
+  }
+  .children-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .child-chip {
+    cursor: pointer; border: 1px solid var(--line); background: var(--paper-raised);
+    border-radius: 999px; padding: 6px 12px; font-size: 13.5px; font-family: var(--font-display);
+  }
+  .child-chip:hover { border-color: var(--jade); color: var(--jade); }
+  .muted { color: var(--ink-faint); font-size: 13.5px; }
+
+  footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-size: 12px; color: var(--ink-faint); text-align: center;
+  }
+
+  .empty-state { text-align: center; padding: 40px 10px; color: var(--ink-soft); font-size: 14px; }
+</style>
+
+<!--
+  ============================================================
+  ข้อมูลตระกูล (แก้ไขได้ที่นี่)
+  ============================================================
+  แก้ไขคน/เพิ่มคนใหม่ได้โดยแก้ JSON ในบล็อก <script id="family-data">
+  ด้านล่างนี้โดยตรง แล้วบันทึกไฟล์ แล้วรีเฟรชหน้าเว็บ — ไม่ต้องแก้โค้ดส่วนอื่น
+
+  โครงสร้างแต่ละคน:
+    id            : รหัสไม่ซ้ำ เช่น "p52"
+    gen           : ลำดับรุ่นเป็นตัวเลข (ตัวที่ 20 = 第二十代)
+    genLabel      : ป้ายรุ่นภาษาจีนต้นฉบับ เช่น "第二十代"
+    name          : ชื่อ (ภาษาจีน)
+    order         : ลำดับการเกิด เช่น "長子" "次女" "義女" หรือ null ถ้าไม่มี
+    gender        : "M" หรือ "F"
+    parentId      : id ของพ่อ/แม่ในสายนี้ หรือ null ถ้าเป็นต้นตระกูล
+    spouseName    : ชื่อคู่สมรส หรือ null
+    spousePhone   : เบอร์คู่สมรส หรือ null
+    phone         : เบอร์ของตัวเอง หรือ null
+    adopted       : true ถ้าเป็นบุตรบุญธรรม (義子/義女)
+    photo         : URL หรือ data URI ของรูปภาพ หรือ null (ยังไม่มี = ใช้ตัวอักษรย่อแทน)
+    notes         : หมายเหตุอื่น ๆ หรือ null
+-->
+<script id="family-data" type="application/json">
+{
+  "meta": {
+    "surname": "許",
+    "title": "許氏族谱",
+    "subtitle": "ผังลำดับวงศ์ตระกูล",
+    "updated": "2026-09-05"
+  },
+  "people": [
+    { "id": "p1",  "gen": 1,  "genLabel": "一世祖",   "name": "許斌",   "order": null,   "gender": "M", "parentId": null, "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p2",  "gen": 2,  "genLabel": "二世祖",   "name": "許世",   "order": null,   "gender": "M", "parentId": "p1", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p3",  "gen": 3,  "genLabel": "第三代",   "name": "許海",   "order": null,   "gender": "M", "parentId": "p2", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p4",  "gen": 4,  "genLabel": "第四代",   "name": "許英",   "order": null,   "gender": "M", "parentId": "p3", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p5",  "gen": 5,  "genLabel": "第五代",   "name": "許尽巨", "order": null,   "gender": "M", "parentId": "p4", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p6",  "gen": 6,  "genLabel": "第六代",   "name": "許克让", "order": null,   "gender": "M", "parentId": "p5", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p7",  "gen": 7,  "genLabel": "第七代",   "name": "許治純", "order": null,   "gender": "M", "parentId": "p6", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p8",  "gen": 8,  "genLabel": "第八代",   "name": "許登弟", "order": null,   "gender": "M", "parentId": "p7", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p9",  "gen": 9,  "genLabel": "第九代",   "name": "許存爵", "order": null,   "gender": "M", "parentId": "p8", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p10", "gen": 10, "genLabel": "第十代",   "name": "許如珠", "order": null,   "gender": "M", "parentId": "p9", "spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p11", "gen": 11, "genLabel": "第十一代", "name": "許聯科", "order": null,   "gender": "M", "parentId": "p10","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p12", "gen": 12, "genLabel": "第十二代", "name": "許國显", "order": null,   "gender": "M", "parentId": "p11","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p13", "gen": 13, "genLabel": "第十三代", "name": "許天金", "order": null,   "gender": "M", "parentId": "p12","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p14", "gen": 14, "genLabel": "第十四代", "name": "許大文", "order": null,   "gender": "M", "parentId": "p13","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p15", "gen": 15, "genLabel": "第十五代", "name": "許志安", "order": null,   "gender": "M", "parentId": "p14","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p16", "gen": 16, "genLabel": "第十六代", "name": "許德金", "order": null,   "gender": "M", "parentId": "p15","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p17", "gen": 17, "genLabel": "第十七代", "name": "許开凤", "order": null,   "gender": "M", "parentId": "p16","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p18", "gen": 18, "genLabel": "第十八代", "name": "許連壽", "order": null,   "gender": "M", "parentId": "p17","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p19", "gen": 19, "genLabel": "第十九代", "name": "許常學", "order": null,   "gender": "M", "parentId": "p18","spouseName": null,     "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+    { "id": "p20", "gen": 20, "genLabel": "第二十代", "name": "許慶洪", "order": null,   "gender": "M", "parentId": "p19","spouseName": "盤妹蔥", "spousePhone": null,        "phone": null,        "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p21", "gen": 21, "genLabel": "第二十一代", "name": "許永富", "order": "長子", "gender": "M", "parentId": "p20", "spouseName": null,     "spousePhone": null,        "phone": "0899978820", "adopted": false, "photo": null, "notes": null },
+    { "id": "p22", "gen": 21, "genLabel": "第二十一代", "name": "許美蘭", "order": "女",   "gender": "F", "parentId": "p20", "spouseName": "趙華",   "spousePhone": null,        "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p23", "gen": 21, "genLabel": "第二十一代", "name": "許永清", "order": "三子", "gender": "M", "parentId": "p20", "spouseName": "字在玲", "spousePhone": "0812951069","phone": "0818616127", "adopted": false, "photo": null, "notes": null },
+    { "id": "p24", "gen": 21, "genLabel": "第二十一代", "name": "許永財", "order": "五子", "gender": "M", "parentId": "p20", "spouseName": "紅歡",   "spousePhone": "0624266052","phone": "0892616053", "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p25", "gen": 22, "genLabel": "第二十二代", "name": "許金菊", "order": "女",   "gender": "F", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p26", "gen": 22, "genLabel": "第二十二代", "name": "許金榮", "order": "子",   "gender": "M", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p27", "gen": 22, "genLabel": "第二十二代", "name": "許金美", "order": "女",   "gender": "F", "parentId": "p21", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p28", "gen": 22, "genLabel": "第二十二代", "name": "許金平", "order": "長子", "gender": "M", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p29", "gen": 22, "genLabel": "第二十二代", "name": "許金麗", "order": "長女", "gender": "F", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p30", "gen": 22, "genLabel": "第二十二代", "name": "許金富", "order": "次子", "gender": "M", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p31", "gen": 22, "genLabel": "第二十二代", "name": "許金惠", "order": "次女", "gender": "F", "parentId": "p22", "spouseName": null, "spousePhone": null, "phone": "0925036558", "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p32", "gen": 22, "genLabel": "第二十二代", "name": "許金金", "order": "長女", "gender": "F", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p33", "gen": 22, "genLabel": "第二十二代", "name": "許金銀", "order": "長子", "gender": "M", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p34", "gen": 22, "genLabel": "第二十二代", "name": "許金慧", "order": "次女", "gender": "F", "parentId": "p23", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p35", "gen": 22, "genLabel": "第二十二代", "name": "許金寶", "order": "長子", "gender": "M", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p36", "gen": 22, "genLabel": "第二十二代", "name": "許金恆", "order": "次子", "gender": "M", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": "0638151584", "adopted": false, "photo": null, "notes": null },
+    { "id": "p37", "gen": 22, "genLabel": "第二十二代", "name": "許金玉", "order": "女",   "gender": "F", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": false, "photo": null, "notes": null },
+    { "id": "p38", "gen": 22, "genLabel": "第二十二代", "name": "許玉林", "order": "義女", "gender": "F", "parentId": "p24", "spouseName": null, "spousePhone": null, "phone": null,          "adopted": true,  "photo": null, "notes": "บุตรสาวบุญธรรม" },
+
+    { "id": "p39", "gen": 23, "genLabel": "第二十三代", "name": "許定玟", "order": "長女", "gender": "F", "parentId": "p25", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p40", "gen": 23, "genLabel": "第二十三代", "name": "許定邦", "order": "長子", "gender": "M", "parentId": "p25", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p41", "gen": 23, "genLabel": "第二十三代", "name": "許定芸", "order": "長女", "gender": "F", "parentId": "p26", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p42", "gen": 23, "genLabel": "第二十三代", "name": "許銀龍", "order": "長子", "gender": "M", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p43", "gen": 23, "genLabel": "第二十三代", "name": "許銀仙", "order": "長女", "gender": "F", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p44", "gen": 23, "genLabel": "第二十三代", "name": "許銀銖", "order": "次女", "gender": "F", "parentId": "p28", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p45", "gen": 23, "genLabel": "第二十三代", "name": "許銀香", "order": "長女", "gender": "F", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p46", "gen": 23, "genLabel": "第二十三代", "name": "許銀貴", "order": "長子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p47", "gen": 23, "genLabel": "第二十三代", "name": "許銀強", "order": "次子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p48", "gen": 23, "genLabel": "第二十三代", "name": "許銀雲", "order": "三子", "gender": "M", "parentId": "p29", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p49", "gen": 23, "genLabel": "第二十三代", "name": "許銀和", "order": "長子", "gender": "M", "parentId": "p31", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+    { "id": "p50", "gen": 23, "genLabel": "第二十三代", "name": "許銀偉", "order": "次子", "gender": "M", "parentId": "p31", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null },
+
+    { "id": "p51", "gen": 24, "genLabel": "第二十四代", "name": "許賢淑", "order": "長女", "gender": "F", "parentId": "p46", "spouseName": null, "spousePhone": null, "phone": null, "adopted": false, "photo": null, "notes": null }
+  ]
+}
+</script>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="title-row">
+      <div class="chop" id="chopMark">許</div>
+      <div class="title-text">
+        <h1 id="pageTitle">許氏族谱</h1>
+        <p id="pageSubtitle">ผังลำดับวงศ์ตระกูล · แตะชื่อเพื่อดูข้อมูลติดต่อ</p>
+      </div>
+    </div>
+    <label class="search" id="searchBox">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" inputmode="search" placeholder="ค้นหาชื่อ เช่น 許金菊" autocomplete="off" />
+      <button class="clear" id="clearSearch" aria-label="ล้างคำค้นหา">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </label>
+  </div>
+</header>
+
+<main class="wrap">
+  <button class="ancestors-toggle" id="ancestorsToggle" aria-expanded="false">
+    <span class="lbl"><b>สายบรรพบุรุษ</b> — 一世祖 ถึง 第十九代
+      <span class="sub">19 รุ่นแรกของตระกูล เรียงเป็นเส้นตรง ก่อนถึงรุ่น 許慶洪 ที่แตกสาย</span>
+    </span>
+    <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+  <div class="ancestor-line" id="ancestorLine">
+    <div class="ancestor-line-inner" id="ancestorLineInner"></div>
+  </div>
+
+  <div class="section-label" id="treeLabel">許慶洪 และผู้สืบสกุล</div>
+  <div class="tree" id="tree"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("family-data").textContent);
+  var people = DATA.people;
+  var byId = {};
+  var childrenOf = {};
+  people.forEach(function (p) {
+    byId[p.id] = p;
+    childrenOf[p.id] = childrenOf[p.id] || [];
+  });
+  people.forEach(function (p) {
+    if (p.parentId) {
+      childrenOf[p.parentId] = childrenOf[p.parentId] || [];
+      childrenOf[p.parentId].push(p);
+    }
+  });
+
+  document.getElementById("pageTitle").textContent = DATA.meta.title || "族谱";
+  document.getElementById("chopMark").textContent = DATA.meta.surname || "氏";
+  if (DATA.meta.subtitle) {
+    document.getElementById("pageSubtitle").textContent =
+      DATA.meta.subtitle + " · แตะชื่อเพื่อดูข้อมูลติดต่อ";
+  }
+
+  var ORDER_TH = {
+    "長子": "บุตรชายคนโต", "次子": "บุตรชายคนรอง", "三子": "บุตรชายคนที่ 3",
+    "四子": "บุตรชายคนที่ 4", "五子": "บุตรชายคนที่ 5",
+    "長女": "บุตรสาวคนโต", "次女": "บุตรสาวคนรอง", "三女": "บุตรสาวคนที่ 3",
+    "子": "บุตรชาย", "女": "บุตรสาว", "義女": "บุตรสาวบุญธรรม", "義子": "บุตรชายบุญธรรม"
+  };
+
+  var ROOT_ID = "p1";
+  var TREE_ROOT_ID = "p20"; // where the branching, interactive part begins
+  var expanded = {};
+  [TREE_ROOT_ID, "p21", "p22", "p23", "p24"].forEach(function (id) { expanded[id] = true; });
+
+  var searchQuery = "";
+
+  function fmtPhone(raw) {
+    if (!raw) return null;
+    var d = raw.replace(/\D/g, "");
+    if (d.length === 10) return d.slice(0, 3) + "-" + d.slice(3, 6) + "-" + d.slice(6);
+    return raw;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function highlight(name) {
+    if (!searchQuery) return escapeHtml(name);
+    var idx = name.indexOf(searchQuery);
+    if (idx === -1) return escapeHtml(name);
+    return escapeHtml(name.slice(0, idx)) + "<mark>" + escapeHtml(name.slice(idx, idx + searchQuery.length)) + "</mark>" + escapeHtml(name.slice(idx + searchQuery.length));
+  }
+
+  function avatarLetter(name) {
+    return name.slice(-1);
+  }
+
+  function matchesQuery(p) {
+    if (!searchQuery) return false;
+    if (p.name.indexOf(searchQuery) !== -1) return true;
+    if (p.spouseName && p.spouseName.indexOf(searchQuery) !== -1) return true;
+    return false;
+  }
+
+  // ids that must render (matches + all their ancestors) while searching
+  function computeSearchVisible() {
+    var visible = {};
+    if (!searchQuery) return null;
+    people.forEach(function (p) {
+      if (matchesQuery(p)) {
+        var cur = p;
+        while (cur) {
+          visible[cur.id] = true;
+          cur = cur.parentId ? byId[cur.parentId] : null;
+        }
+      }
+    });
+    return visible;
+  }
+
+  function phoneIconSvg() {
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+  }
+
+  function renderNode(p, searchVisible) {
+    var kids = childrenOf[p.id] || [];
+    if (searchVisible) kids = kids.filter(function (k) { return searchVisible[k.id]; });
+
+    var isOpen = searchQuery ? true : !!expanded[p.id];
+    var hasKids = kids.length > 0;
+
+    var genderClass = p.gender === "F" ? " gender-f" : "";
+    var subParts = ["รุ่น " + p.gen];
+    if (p.order) subParts.push(ORDER_TH[p.order] || p.order);
+    if (p.adopted) subParts.push("บุญธรรม");
+
+    var html = '<div class="node" data-id="' + p.id + '">';
+    html += '<div class="node-row">';
+    if (hasKids) {
+      html += '<button class="expand-btn" data-toggle="' + p.id + '" aria-expanded="' + isOpen + '" aria-label="ขยาย/ย่อรายชื่อบุตร">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>';
+    } else {
+      html += '<span class="expand-btn spacer"></span>';
+    }
+    html += '<button class="person-chip" data-open="' + p.id + '">';
+    html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
+    html += '<span class="person-meta">';
+    html += '<span class="person-name">' + highlight(p.name) + '</span>';
+    html += '<span class="person-sub">' + subParts.map(function (s) { return '<span class="tag' + (s === "บุญธรรม" ? " adopted" : "") + '">' + escapeHtml(s) + '</span>'; }).join("") + '</span>';
+    html += '</span>';
+    if (p.phone) html += '<span class="chip-phone">' + phoneIconSvg() + '</span>';
+    html += '</button>';
+    html += '</div>';
+
+    if (hasKids && isOpen) {
+      html += '<div class="node-children">';
+      kids.forEach(function (k) { html += renderNode(k, searchVisible); });
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function render() {
+    var searchVisible = computeSearchVisible();
+    var treeEl = document.getElementById("tree");
+    var root = byId[TREE_ROOT_ID];
+
+    if (searchQuery && (!searchVisible || !Object.keys(searchVisible).length)) {
+      treeEl.innerHTML = '<div class="empty-state">ไม่พบชื่อ "' + escapeHtml(searchQuery) + '" ในทำเนียบตระกูล</div>';
+    } else if (searchQuery && searchVisible[ROOT_ID] && !searchVisible[TREE_ROOT_ID]) {
+      // match lives purely in the ancestor line; tree stays as-is (empty note)
+      treeEl.innerHTML = renderNode(root, searchVisible);
+    } else {
+      treeEl.innerHTML = renderNode(root, searchVisible);
+    }
+
+    document.getElementById("treeLabel").textContent = searchQuery
+      ? 'ผลการค้นหา "' + searchQuery + '"'
+      : (root.name + " และผู้สืบสกุล");
+
+    renderAncestorLine(searchVisible);
+
+    // auto-open ancestor drawer if a match lives there
+    if (searchQuery && searchVisible) {
+      var hasAncestorMatch = false;
+      for (var i = 1; i <= 19; i++) {
+        if (searchVisible["p" + i] && matchesQuery(byId["p" + i])) hasAncestorMatch = true;
+      }
+      if (hasAncestorMatch) setAncestorOpen(true);
+    }
+  }
+
+  function renderAncestorLine(searchVisible) {
+    var ids = [];
+    for (var i = 1; i <= 19; i++) ids.push("p" + i);
+    if (searchVisible) ids = ids.filter(function (id) { return searchVisible[id]; });
+    var inner = document.getElementById("ancestorLineInner");
+    inner.innerHTML = ids.map(function (id) {
+      var p = byId[id];
+      return '<button class="ancestor-row person-chip" data-open="' + p.id + '" style="all:unset;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:5px 8px;border-radius:7px;font-size:14px;width:100%;box-sizing:border-box;">' +
+        '<span class="gi">' + p.gen + '</span>' +
+        '<span class="gn">' + highlight(p.name) + '</span>' +
+        '<span class="gl">' + escapeHtml(p.genLabel) + '</span>' +
+        '</button>';
+    }).join("") + (ids.length ? '<div class="arrow">↓ สืบสายสู่ ' + escapeHtml(byId[TREE_ROOT_ID].name) + ' (第二十代) ซึ่งเป็นจุดแตกสายตระกูล</div>' : '');
+  }
+
+  function setAncestorOpen(open) {
+    var toggle = document.getElementById("ancestorsToggle");
+    var line = document.getElementById("ancestorLine");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    line.classList.toggle("open", open);
+  }
+
+  // ---------- detail panel ----------
+  function openPanel(id) {
+    var p = byId[id];
+    if (!p) return;
+    var kids = childrenOf[id] || [];
+    var parent = p.parentId ? byId[p.parentId] : null;
+    var genderClass = p.gender === "F" ? " gender-f" : "";
+
+    var html = '<div class="panel-top"><button class="panel-close" id="panelClose" aria-label="ปิด">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
+
+    html += '<div class="panel-head">';
+    html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
+    html += '<div><h2>' + escapeHtml(p.name) + '</h2><div class="gens">';
+    html += '<span class="tag">รุ่นที่ ' + p.gen + ' · ' + escapeHtml(p.genLabel) + '</span>';
+    if (p.order) html += '<span class="tag">' + escapeHtml(ORDER_TH[p.order] || p.order) + '</span>';
+    if (p.adopted) html += '<span class="tag adopted">บุตรบุญธรรม</span>';
+    html += '</div></div></div>';
+
+    html += '<div class="panel-section"><h3>ข้อมูลติดต่อ</h3>';
+    if (p.phone) {
+      html += '<div class="info-row"><span class="val">' + fmtPhone(p.phone) + '</span>' +
+        '<a class="call-btn" href="tel:' + p.phone + '">' + phoneIconSvg() + ' โทร</a></div>';
+    } else {
+      html += '<div class="info-row"><span class="val empty">ไม่มีข้อมูลเบอร์โทร</span></div>';
+    }
+    html += '</div>';
+
+    if (p.spouseName) {
+      html += '<div class="panel-section"><h3>คู่สมรส</h3><div class="info-row"><span class="spouse-name">' + escapeHtml(p.spouseName) + '</span>';
+      if (p.spousePhone) {
+        html += '<a class="call-btn" href="tel:' + p.spousePhone + '">' + phoneIconSvg() + ' ' + fmtPhone(p.spousePhone) + '</a>';
+      } else {
+        html += '<span class="val empty">ไม่มีเบอร์โทร</span>';
+      }
+      html += '</div></div>';
+    }
+
+    if (p.notes) {
+      html += '<div class="panel-section"><h3>หมายเหตุ</h3><p class="muted">' + escapeHtml(p.notes) + '</p></div>';
+    }
+
+    if (parent) {
+      html += '<div class="panel-section"><h3>สายตระกูล</h3><button class="parent-link" data-open="' + parent.id + '">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+        'บุตรของ ' + escapeHtml(parent.name) + '</button></div>';
+    }
+
+    html += '<div class="panel-section"><h3>ทายาท (' + kids.length + ' คน)</h3>';
+    if (kids.length) {
+      html += '<div class="children-grid">' + kids.map(function (k) {
+        return '<button class="child-chip" data-open="' + k.id + '">' + escapeHtml(k.name) + '</button>';
+      }).join("") + '</div>';
+    } else {
+      html += '<p class="muted">ไม่มีข้อมูลทายาทในทำเนียบนี้</p>';
+    }
+    html += '</div>';
+
+    document.getElementById("panel").innerHTML = html;
+    document.getElementById("overlay").classList.add("open");
+  }
+
+  function closePanel() {
+    document.getElementById("overlay").classList.remove("open");
+  }
+
+  // ---------- events (delegated) ----------
+  document.addEventListener("click", function (e) {
+    var toggleBtn = e.target.closest("[data-toggle]");
+    if (toggleBtn) {
+      var id = toggleBtn.getAttribute("data-toggle");
+      expanded[id] = !expanded[id];
+      render();
+      return;
+    }
+    var openBtn = e.target.closest("[data-open]");
+    if (openBtn) {
+      openPanel(openBtn.getAttribute("data-open"));
+      return;
+    }
+    if (e.target.id === "panelClose" || e.target.closest("#panelClose")) {
+      closePanel();
+      return;
+    }
+    if (e.target.id === "overlay") {
+      closePanel();
+      return;
+    }
+    if (e.target.id === "ancestorsToggle" || e.target.closest("#ancestorsToggle")) {
+      var line = document.getElementById("ancestorLine");
+      setAncestorOpen(!line.classList.contains("open"));
+      return;
+    }
+    if (e.target.id === "clearSearch" || e.target.closest("#clearSearch")) {
+      var input = document.getElementById("searchInput");
+      input.value = "";
+      searchQuery = "";
+      document.getElementById("searchBox").classList.remove("has-query");
+      render();
+      input.focus();
+      return;
+    }
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closePanel();
+  });
+
+  document.getElementById("searchInput").addEventListener("input", function (e) {
+    searchQuery = e.target.value.trim();
+    document.getElementById("searchBox").classList.toggle("has-query", !!searchQuery);
+    render();
+  });
+
+  var footerP = document.getElementById("footerNote");
+  if (footerP) {
+    footerP.textContent = "ทำเนียบวงศ์ตระกูล " + (DATA.meta.surname || "") +
+      " — ข้อมูล ณ วันที่ " + (DATA.meta.updated || "-") +
+      " · แก้ไขข้อมูลได้ที่บล็อก JSON ต้นไฟล์นี้";
+  }
+
+  render();
+})();
+</script>
+
+<footer class="wrap" style="max-width:720px;margin:0 auto;">
+  <p id="footerNote"></p>
+</footer>
