@@ -126,7 +126,42 @@
   /* ---------- Section headers ---------- */
   .section-label {
     font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase;
-    color: var(--ink-faint); font-weight: 600; margin: 28px 4px 10px;
+    color: var(--ink-faint); font-weight: 600; margin: 0;
+  }
+  .tree-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin: 28px 4px 10px; flex-wrap: wrap;
+  }
+  .view-toggle {
+    flex: none; display: flex; gap: 2px; padding: 2px;
+    background: var(--paper-sunken); border-radius: 9px;
+  }
+  .view-btn {
+    display: flex; align-items: center; gap: 5px; border: none; background: none;
+    color: var(--ink-soft); font-size: 12px; font-weight: 600; padding: 6px 10px;
+    border-radius: 7px; cursor: pointer;
+  }
+  .view-btn[aria-pressed="true"] { background: var(--paper-raised); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
+
+  /* ---------- Tree diagram (org-chart) view ---------- */
+  .tree-diagram-wrap {
+    margin-top: 10px; overflow-x: auto; overflow-y: hidden;
+    border: 1px solid var(--line); border-radius: 12px; background: var(--paper-raised);
+  }
+  .tree-diagram { position: relative; padding: 20px 24px; }
+  .dg-connectors { position: absolute; top: 0; left: 0; overflow: visible; }
+  .dg-connectors path { stroke: var(--line); stroke-width: 2; fill: none; }
+  .dg-node {
+    position: absolute; width: 130px; box-sizing: border-box;
+    display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    cursor: pointer; text-align: left;
+  }
+  .dg-node:hover { border-color: var(--jade); }
+  .dg-node .avatar { width: 28px; height: 28px; font-size: 12.5px; }
+  .dg-node-name {
+    font-family: var(--font-display); font-weight: 600; font-size: 13px;
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;
   }
 
   /* ---------- Ancestor line (gen 1–19) ---------- */
@@ -187,6 +222,7 @@
   .person-chip:hover { border-color: var(--line); }
   .person-chip:focus-visible { outline: 2px solid var(--jade); outline-offset: 1px; }
   .avatar {
+    position: relative; overflow: hidden;
     flex: none; width: 34px; height: 34px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-display); font-weight: 600; font-size: 15px;
@@ -194,6 +230,11 @@
     border: 1px solid color-mix(in srgb, var(--seal) 35%, transparent);
   }
   .avatar.gender-f { color: var(--jade); background: var(--jade-soft); border-color: color-mix(in srgb, var(--jade) 35%, transparent); }
+  .avatar-letter { transition: opacity 0.15s ease; }
+  .avatar-photo {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; transition: opacity 0.15s ease;
+  }
   .person-meta { min-width: 0; flex: 1; }
   .person-name {
     font-family: var(--font-display); font-weight: 600; font-size: 15.5px;
@@ -405,8 +446,8 @@
 <main class="wrap">
   <div id="ancestorsBlock">
     <button class="ancestors-toggle" id="ancestorsToggle" aria-expanded="false">
-      <span class="lbl"><b>สายบรรพบุรุษ</b> — 一世祖 ถึง 第十九代
-        <span class="sub">19 รุ่นแรกของตระกูล เรียงเป็นเส้นตรง ก่อนถึงรุ่น 許慶洪 ที่แตกสาย</span>
+      <span class="lbl"><b id="ancestorsLbl">สายบรรพบุรุษ</b>
+        <span class="sub" id="ancestorsSub">กำลังโหลด…</span>
       </span>
       <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
     </button>
@@ -415,15 +456,53 @@
     </div>
   </div>
 
-  <div class="section-label" id="treeLabel">กำลังโหลด…</div>
+  <div class="tree-header">
+    <div class="section-label" id="treeLabel">กำลังโหลด…</div>
+    <div class="view-toggle" id="viewToggle" role="group" aria-label="รูปแบบการแสดงผล">
+      <button type="button" class="view-btn" data-view="list" aria-pressed="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        รายการ
+      </button>
+      <button type="button" class="view-btn" data-view="diagram" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M12 12H5v4M12 12h7v4"/></svg>
+        แผนภูมิ
+      </button>
+    </div>
+  </div>
   <div class="tree" id="tree"><div class="empty-state">กำลังโหลดข้อมูล…</div></div>
+  <div class="tree-diagram-wrap" id="treeDiagramWrap" hidden>
+    <div class="tree-diagram" id="treeDiagram"></div>
+  </div>
 </main>
 
 <div class="overlay" id="overlay" hidden>
-  <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
+  <div class="panel" id="panel" role="dialog" aria-modal="true">
+    <div id="panelInner"></div>
+  </div>
 </div>
 
 <script>
+// Global (not inside initApp's closure) because it's invoked from inline
+// onerror="" attributes on <img> tags, which always run in global scope.
+// Photos live in photos/{personId}.EXT beside this page — we don't know
+// the extension in advance, so try a short list in order and fall back
+// to the plain letter avatar underneath if none of them load.
+var XU_PHOTO_EXTS = ["jpg", "jpeg", "png", "webp"];
+function xuPhotoFallback(img, id, attempt) {
+  attempt = (attempt || 0) + 1;
+  if (attempt < XU_PHOTO_EXTS.length) {
+    img.setAttribute("onerror", "xuPhotoFallback(this,'" + id + "'," + attempt + ")");
+    img.src = "photos/" + id + "." + XU_PHOTO_EXTS[attempt];
+  } else {
+    img.style.display = "none";
+  }
+}
+function xuPhotoLoaded(img) {
+  img.style.opacity = "1";
+  var letter = img.previousElementSibling;
+  if (letter) letter.style.opacity = "0";
+}
+
 function initApp(DATA) {
   "use strict";
   var people = DATA.people;
@@ -511,10 +590,38 @@ function initApp(DATA) {
     return out.toLowerCase().replace(/\s+/g, "");
   }
 
-  var ROOT_ID = "p1";
-  var TREE_ROOT_ID = "p20"; // where the branching, interactive part begins
+  // Derived from the data, not hard-coded: the ultimate ancestor is
+  // whoever has no parentId, and the "branching point" (where the compact
+  // ancestor line ends and the interactive tree begins) is the first
+  // descendant down that single-child chain who has 0 or 2+ children.
+  // Adding/removing people re-derives both automatically.
+  var rootPerson = people.filter(function (p) { return !p.parentId; })[0];
+  var ROOT_ID = rootPerson.id;
+  var treeRootPerson = rootPerson;
+  while ((childrenOf[treeRootPerson.id] || []).length === 1) {
+    treeRootPerson = childrenOf[treeRootPerson.id][0];
+  }
+  var TREE_ROOT_ID = treeRootPerson.id;
+  var ANCESTOR_CHAIN_IDS = (function () {
+    var ids = [];
+    var cur = rootPerson;
+    while (cur.id !== TREE_ROOT_ID) {
+      ids.push(cur.id);
+      cur = childrenOf[cur.id][0];
+    }
+    return ids;
+  })();
+
   var expanded = {};
-  [TREE_ROOT_ID, "p21", "p22", "p23", "p24"].forEach(function (id) { expanded[id] = true; });
+  expanded[TREE_ROOT_ID] = true;
+  (childrenOf[TREE_ROOT_ID] || []).forEach(function (c) { expanded[c.id] = true; });
+
+  (function () {
+    var lbl = document.getElementById("ancestorsLbl");
+    var sub = document.getElementById("ancestorsSub");
+    if (lbl) lbl.textContent = "สายบรรพบุรุษ — " + rootPerson.genLabel + " ถึง " + (ANCESTOR_CHAIN_IDS.length ? byId[ANCESTOR_CHAIN_IDS[ANCESTOR_CHAIN_IDS.length - 1]].genLabel : rootPerson.genLabel);
+    if (sub) sub.textContent = ANCESTOR_CHAIN_IDS.length + " รุ่นแรกของตระกูล เรียงเป็นเส้นตรง ก่อนถึงรุ่น " + treeRootPerson.name + " ที่แตกสาย";
+  })();
 
   var searchQuery = "";
 
@@ -659,6 +766,19 @@ function initApp(DATA) {
 
   function avatarLetter(name) {
     return name.slice(-1);
+  }
+
+  // Builds an avatar: the usual letter circle, plus an <img> trying
+  // photos/{id}.jpg (falling through .jpeg/.png/.webp via xuPhotoFallback)
+  // that quietly takes over — fading in and hiding the letter — the
+  // moment a matching photo actually loads. No photo present = letter
+  // avatar exactly as before, nothing extra shown.
+  function avatarHtml(p, genderClass) {
+    return '<span class="avatar' + genderClass + '">' +
+      '<span class="avatar-letter">' + escapeHtml(avatarLetter(p.name)) + '</span>' +
+      '<img class="avatar-photo" alt="" src="photos/' + encodeURIComponent(p.id) + '.' + XU_PHOTO_EXTS[0] + '" ' +
+      'onerror="xuPhotoFallback(this,\'' + p.id + '\',0)" onload="xuPhotoLoaded(this)">' +
+      '</span>';
   }
 
   var FIELD_LABELS = {
@@ -814,7 +934,7 @@ function initApp(DATA) {
       html += '<span class="expand-btn spacer"></span>';
     }
     html += '<button class="person-chip" data-open="' + p.id + '">';
-    html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
+    html += avatarHtml(p, genderClass);
     html += '<span class="person-meta">';
     html += '<span class="person-name">' + highlightName(p.name) + '</span>';
     if (p.thaiName) html += '<span class="person-thai">' + highlightPlain(p.thaiName) + '</span>';
@@ -863,10 +983,9 @@ function initApp(DATA) {
     // always restores exactly the open/closed state the user last chose.
     var ancestorsBlock = document.getElementById("ancestorsBlock");
     if (searchQuery) {
-      var hasAncestorMatch = false;
-      for (var i = 1; i <= 19; i++) {
-        if (searchVisible && searchVisible["p" + i] && matchesQuery(byId["p" + i])) { hasAncestorMatch = true; break; }
-      }
+      var hasAncestorMatch = ANCESTOR_CHAIN_IDS.some(function (id) {
+        return searchVisible && searchVisible[id] && matchesQuery(byId[id]);
+      });
       ancestorsBlock.hidden = !hasAncestorMatch;
       if (hasAncestorMatch) setAncestorOpen(true, false);
     } else {
@@ -876,8 +995,7 @@ function initApp(DATA) {
   }
 
   function renderAncestorLine(searchVisible) {
-    var ids = [];
-    for (var i = 1; i <= 19; i++) ids.push("p" + i);
+    var ids = ANCESTOR_CHAIN_IDS.slice();
     if (searchVisible) ids = ids.filter(function (id) { return searchVisible[id]; });
     var inner = document.getElementById("ancestorLineInner");
     inner.innerHTML = ids.map(function (id) {
@@ -887,7 +1005,7 @@ function initApp(DATA) {
         '<span class="gn">' + highlightName(p.name) + '</span>' +
         '<span class="gl">' + escapeHtml(p.genLabel) + '</span>' +
         '</button>';
-    }).join("") + (ids.length ? '<div class="arrow">↓ สืบสายสู่ ' + escapeHtml(byId[TREE_ROOT_ID].name) + ' (第二十代) ซึ่งเป็นจุดแตกสายตระกูล</div>' : '');
+    }).join("") + (ids.length ? '<div class="arrow">↓ สืบสายสู่ ' + escapeHtml(byId[TREE_ROOT_ID].name) + ' (' + escapeHtml(byId[TREE_ROOT_ID].genLabel) + ') ซึ่งเป็นจุดแตกสายตระกูล</div>' : '');
   }
 
   // `manual` marks a change as the user's own choice (persisted and
@@ -903,7 +1021,7 @@ function initApp(DATA) {
   }
 
   // ---------- detail panel ----------
-  function openPanel(id) {
+  function openPanel(id, direction) {
     var p = byId[id];
     if (!p) return;
     var kids = childrenOf[id] || [];
@@ -914,7 +1032,7 @@ function initApp(DATA) {
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
 
     html += '<div class="panel-head">';
-    html += '<span class="avatar' + genderClass + '">' + escapeHtml(avatarLetter(p.name)) + '</span>';
+    html += avatarHtml(p, genderClass);
     html += '<div><h2>' + escapeHtml(p.name) + '</h2>';
     if (p.thaiName) html += '<div class="thai-name">' + escapeHtml(p.thaiName) + '</div>';
     html += '<div class="gens">';
@@ -962,7 +1080,7 @@ function initApp(DATA) {
     }
 
     if (parent) {
-      html += '<div class="panel-section"><h3>สายตระกูล</h3><button class="parent-link" data-open="' + parent.id + '">' +
+      html += '<div class="panel-section"><h3>สายตระกูล</h3><button class="parent-link" data-open="' + parent.id + '" data-nav="parent">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
         'บุตรของ ' + escapeHtml(parent.name) + '</button></div>';
     }
@@ -970,15 +1088,48 @@ function initApp(DATA) {
     html += '<div class="panel-section"><h3>ทายาท (' + kids.length + ' คน)</h3>';
     if (kids.length) {
       html += '<div class="children-grid">' + kids.map(function (k) {
-        return '<button class="child-chip" data-open="' + k.id + '">' + escapeHtml(k.name) + '</button>';
+        return '<button class="child-chip" data-open="' + k.id + '" data-nav="child">' + escapeHtml(k.name) + '</button>';
       }).join("") + '</div>';
     } else {
       html += '<p class="muted">ไม่มีข้อมูลทายาทในทำเนียบนี้</p>';
     }
     html += '</div>';
 
-    document.getElementById("panel").innerHTML = html;
+    setPanelContent(html, direction);
     openOverlay();
+  }
+
+  // Swaps the panel's content. Plain replace + scroll-to-top on a fresh
+  // open (direction omitted); on navigation *within* an already-open
+  // panel (clicking a child or "บุตรของ …" link) it also resets scroll
+  // and adds a quick slide/fade so drilling into a long line of
+  // descendants reads as moving forward/back, not an instant jump-cut —
+  // and, concretely, never leaves the view scrolled past the top of a
+  // shorter person's content (which used to show almost nothing).
+  //
+  // Deliberately synchronous, no requestAnimationFrame: the content swap
+  // and scroll reset must happen no matter what, so correctness can't
+  // depend on the browser ever getting around to a rAF tick (which, on
+  // a backgrounded/throttled tab, may not happen at all). The transition
+  // is done the old way instead — force a layout flush between setting
+  // the "before" and "after" styles so the browser still animates it.
+  function setPanelContent(html, direction) {
+    var panel = document.getElementById("panel");
+    var inner = document.getElementById("panelInner");
+    if (direction) {
+      inner.style.transition = "none";
+      inner.style.opacity = "0";
+      inner.style.transform = direction === "child" ? "translateX(16px)" : "translateX(-16px)";
+      void inner.offsetHeight; // flush the styles above before the content/transition change below
+    }
+    inner.innerHTML = html;
+    panel.scrollTop = 0;
+    if (direction) {
+      void inner.offsetHeight; // flush again so the transition-in below actually plays
+      inner.style.transition = "opacity 0.16s ease, transform 0.16s ease";
+      inner.style.opacity = "1";
+      inner.style.transform = "translateX(0)";
+    }
   }
 
   // The overlay stays `hidden` (removed from layout and hit-testing
@@ -1008,6 +1159,11 @@ function initApp(DATA) {
 
   // ---------- events (delegated) ----------
   document.addEventListener("click", function (e) {
+    var viewBtn = e.target.closest(".view-btn");
+    if (viewBtn) {
+      setViewMode(viewBtn.getAttribute("data-view"));
+      return;
+    }
     var toggleBtn = e.target.closest("[data-toggle]");
     if (toggleBtn) {
       var id = toggleBtn.getAttribute("data-toggle");
@@ -1017,7 +1173,7 @@ function initApp(DATA) {
     }
     var openBtn = e.target.closest("[data-open]");
     if (openBtn) {
-      openPanel(openBtn.getAttribute("data-open"));
+      openPanel(openBtn.getAttribute("data-open"), openBtn.getAttribute("data-nav"));
       return;
     }
     if (e.target.id === "panelClose" || e.target.closest("#panelClose")) {
@@ -1061,7 +1217,84 @@ function initApp(DATA) {
       " · แก้ไขข้อมูลได้ที่ family-data.json";
   }
 
+  // ---------- diagram (org-chart) view ----------
+  // A simple centered-tree layout: leaves get the next free column in
+  // left-to-right order, and every internal node is centered over the
+  // span of its own children's columns — the standard approach for a
+  // readable, non-overlapping org chart without a heavier layout library.
+  // Always shows the full subtree under TREE_ROOT_ID regardless of the
+  // list view's expand/collapse state or any active search — it's a
+  // "see everyone at once" view, separate from the filtered list.
+  function buildDiagramLayout() {
+    var NODE_W = 130, NODE_H = 56, H_GAP = 18, V_GAP = 46;
+    var positions = {};
+    var nextCol = 0;
+    function walk(id, depth) {
+      var kids = childrenOf[id] || [];
+      var col;
+      if (!kids.length) {
+        col = nextCol++;
+      } else {
+        var cols = kids.map(function (k) { return walk(k.id, depth + 1); });
+        col = (cols[0] + cols[cols.length - 1]) / 2;
+      }
+      positions[id] = { col: col, depth: depth };
+      return col;
+    }
+    walk(TREE_ROOT_ID, 0);
+    var maxDepth = 0;
+    Object.keys(positions).forEach(function (id) { if (positions[id].depth > maxDepth) maxDepth = positions[id].depth; });
+    return { positions: positions, cols: nextCol, maxDepth: maxDepth, NODE_W: NODE_W, NODE_H: NODE_H, H_GAP: H_GAP, V_GAP: V_GAP };
+  }
+
+  function renderDiagram() {
+    var L = buildDiagramLayout();
+    var colWidth = L.NODE_W + L.H_GAP;
+    var rowHeight = L.NODE_H + L.V_GAP;
+    function cx(id) { return L.positions[id].col * colWidth + L.NODE_W / 2; }
+    function topY(id) { return L.positions[id].depth * rowHeight; }
+    var width = L.cols * colWidth - L.H_GAP;
+    var height = (L.maxDepth + 1) * L.NODE_H + L.maxDepth * L.V_GAP;
+
+    var lines = [];
+    Object.keys(L.positions).forEach(function (id) {
+      var p = byId[id];
+      if (!p || !p.parentId || !(p.parentId in L.positions)) return;
+      var px = cx(p.parentId), py = topY(p.parentId) + L.NODE_H;
+      var chx = cx(id), chy = topY(id);
+      var midY = py + L.V_GAP / 2;
+      lines.push('<path d="M ' + px + ' ' + py + ' V ' + midY + ' H ' + chx + ' V ' + chy + '" />');
+    });
+
+    var nodesHtml = Object.keys(L.positions).map(function (id) {
+      var p = byId[id];
+      var genderClass = p.gender === "F" ? " gender-f" : "";
+      return '<button class="dg-node" data-open="' + id + '" style="left:' + (cx(id) - L.NODE_W / 2) + 'px; top:' + topY(id) + 'px;">' +
+        avatarHtml(p, genderClass) +
+        '<span class="dg-node-name">' + escapeHtml(p.name) + '</span>' +
+        '</button>';
+    }).join("");
+
+    var container = document.getElementById("treeDiagram");
+    container.style.width = width + "px";
+    container.style.height = height + "px";
+    container.innerHTML =
+      '<svg class="dg-connectors" width="' + width + '" height="' + height + '">' + lines.join("") + '</svg>' +
+      nodesHtml;
+  }
+
+  var viewMode = "list";
+  function setViewMode(mode) {
+    viewMode = mode;
+    document.getElementById("tree").hidden = mode !== "list";
+    document.getElementById("treeDiagramWrap").hidden = mode !== "diagram";
+    Array.prototype.forEach.call(document.querySelectorAll(".view-btn"), function (btn) {
+      btn.setAttribute("aria-pressed", btn.getAttribute("data-view") === mode ? "true" : "false");
+    });
+  }
+
   render();
+  renderDiagram();
 }
 
 // ---------- bootstrap: load family-data.json from beside this file ----------
